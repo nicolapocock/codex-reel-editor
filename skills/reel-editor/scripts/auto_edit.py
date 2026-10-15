@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Draft edit.json from the cut master's transcript: captions chunked in the brand's caption mode and punch-ins on a
-steady rhythm. Claude then only marks accent words and adds 3-6 cards - no design work.
+steady rhythm. Codex then only marks accent words and adds 3-6 cards - no design work.
 Usage: python3 auto_edit.py <reel-folder>     (needs <reel-folder>/master_transcript.json; see SKILL.md step 5)"""
 import json, os, re, sys
 from pathlib import Path
@@ -35,5 +35,5 @@ for i, w in enumerate(words):
     if new_sentence and w["start"] - last > 1.2 or w["start"] - last > 2.2:
         punch.append(round(w["start"], 2)); last = w["start"]
 
-json.dump({"captions": captions, "punch": punch, "cards": []}, open(reel / "edit.json", "w"), indent=1)
+json.dump({"captions": captions, "punch": punch, "cards": [], "captionStyle": {"fixedPosition": True}}, open(reel / "edit.json", "w"), indent=1)
 print(f"edit.json: {len(captions)} captions ({mode} mode), {len(punch)} punch-ins, 0 cards - now mark accents + add cards")

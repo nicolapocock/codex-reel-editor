@@ -114,7 +114,8 @@ def do_import(reel, review):
     if d.get("cut") is None: d["cut"] = reel_json["proposedCut"]          # [] is a real decision ("cut nothing"), not "unset"
     if d.get("captions") is None: d["captions"] = reel_json["captions"]
     P = node(reel_json, d)
-    json.dump({"source": raw_clip(reel).name, "audio": "voice.wav", "keep": [[round(a, 3), round(b, 3)] for a, b in P["spans"]]},
+    if not P["spans"]: raise ValueError("Keep at least one word before building a preview.")
+    json.dump({"source": raw_clip(reel).name, "audio": raw_clip(reel).name if d.get("audioMode") == "original" else "voice.wav", "keep": [[round(a, 3), round(b, 3)] for a, b in P["spans"]]},
               open(reel / "edl.json", "w"))
     caps = [{"start": round(c["start"], 3), "end": round(c["end"], 3),
              "words": [{"text": re.sub(r"[.,!?;:]+$", "", w["text"]), "t": round(w["t"], 3), "accent": w["accent"]} for w in c["words"]]}
@@ -131,7 +132,7 @@ def do_import(reel, review):
     punch, last = [], -9.0   # punch-ins on sentence starts in the cut, at most every ~6 s (emphasis, not every line)
     for c in caps:
         if c["start"] - last > 6: punch.append(c["start"]); last = c["start"]
-    json.dump({"captions": caps, "punch": punch, "cards": cards, "hash": P["hash"]}, open(reel / "edit.json", "w"), indent=1)
+    json.dump({"captions": caps, "punch": punch, "cards": cards, "hash": P["hash"], "captionStyle": d.get("captionStyle", {})}, open(reel / "edit.json", "w"), indent=1)
     print(f"cut {P['cutDur']:.1f}s from {len(P['spans'])} spans; {len(caps)} captions; {len(cards)} graphics; hash {P['hash']}")
     for c in changes: print("CHANGE REQUESTED:", c)
     for k, n in (d.get("notes") or {}).items():

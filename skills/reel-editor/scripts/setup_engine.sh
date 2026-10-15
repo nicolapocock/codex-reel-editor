@@ -31,6 +31,6 @@ H="$E/hf"; mkdir -p "$H"
 for m in caption-camera-follow carousel-vision-1 carousel-path-1 carousel-circle-1 carousel-orbit-1 hw-arrow hw-underline \
          oversized-cursor notification-stack code-terminal-run chat-message yt-comment-card instagram-follow count-up \
          animated-bar-chart mk-line-graph native-notification-pop x-follow-card chart-story; do
-  ls "$H"/compositions/"$m".html "$H"/compositions/components/"$m".html >/dev/null 2>&1 || (cd "$H" && npx -y hyperframes@0.8.145 add "$m" >/dev/null 2>&1) || echo "note: couldn't fetch motion $m" >&2
+  ls "$H"/compositions/"$m".html "$H"/compositions/components/"$m".html >/dev/null 2>&1 || (cd "$H" && npx -y hyperframes@0.8.157 add "$m" >/dev/null 2>&1) || echo "note: couldn't fetch motion $m" >&2
 done
 echo "engine ready: $E"

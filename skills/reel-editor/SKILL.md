@@ -9,7 +9,7 @@ Turns a raw talking-head clip into a finished, on-brand vertical reel. Every bra
 
 ## Before anything else: is there a brand file?
 
-The workspace is `~/reels/` unless `REELS_HOME` is set.
+The workspace is `REELS_HOME` when set, otherwise `~/reels/`. In a restricted workspace set `REELS_HOME` to a writable project folder and pass it consistently to every script. Resolve script paths relative to this skill, not the shell working directory.
 
 - **No `~/reels/brand.md`** → run the setup interview in `references/setup-interview.md` first. Do not edit a clip without a brand file, even if they say "just use whatever". The interview takes 5 minutes and it is the whole point of this skill.
 - **Brand file exists** → read `brand.md` and `brand.json` in full, then continue.
@@ -26,8 +26,9 @@ Each reel gets its own folder: `~/reels/<yyyy-mm-dd>-<short-name>/`. Copy the ra
 2. **Clean the voice** - `bash scripts/clean_audio.sh <clip> voice.wav` (add `--denoise` if there is background noise). Targets -14 LUFS, the level Instagram and TikTok expect.
 3. **Review (their call)** - propose: lines to cut (repeats, false starts, rambles), fillers to drop, CTA moved to the end, target under 60 s, and the graphics plan. **Wait for their yes before cutting.** This is the step people care most about.
    **Look at the start and end before proposing cuts:** grab a frame every 0.5 s for the first and last 4 s. Cut any camera setup (pointing at the floor/garden, flipping the camera, reaching for the phone) even if words are spoken over it. Start on the first frame where they're settled in shot, and on a word that works as an opener.
-   - **Main path: the Reel Review page.** First check that the `Artifact` and `ArtifactData` tools exist in this session (load them through tool search if they're deferred). If they do, follow `references/review.md`: they tap words to cut, watch the live rough cut, check graphics, captions, sound and colour, then say "build preview". Its import step writes `edl.json` + `edit.json`, so skip to step 4's cut and step 5.4's render.
-   - **Fallback: review in chat** when those tools aren't there (older Claude Code, other apps). Show the transcript as numbered lines (format in `references/rough-cut.md`), then the card list in step 5.
+   - **Main path: local Reel Review page.** Follow `references/review.md`. It uses the existing review UI with local JSON persistence; no Claude artifacts or cloud uploads. Import its approved decisions through `review_sync.py`, then cut and render.
+   - **Fallback: review in chat** if a local browser cannot open the page. Show numbered transcript lines (`references/rough-cut.md`) and the graphics plan, and write the approved decisions to the edit files.
+
 4. **Tighten, then cut + speed** - write `edl.json` from the approved lines, then `python3 scripts/tighten.py <folder>`: it removes fillers and shortens pauses inside the kept lines, as hard as the brand's `"pacing"` says (`natural` default, `tight`, `fast`; presets in `scripts/pacing.py`). They never approve these one by one. Then `python3 scripts/cut.py <folder>`. Speed comes from the same preset unless `brand.json` sets `"speed"`. Listen-check: re-transcribe `master.mp4` and confirm no clipped words at the joins.
 5. **Graphics + captions: fill the template, don't design.** You are the editor here, not the designer - the look is already built from the brand file.
    1. `python3 scripts/transcribe.py master.mp4 master_transcript.json`
@@ -59,3 +60,12 @@ If the brand file and your taste disagree, the brand file wins. If they correct 
 | Captions in a font the brand file bans | Re-read brand.md "Rules" before step 5 |
 | Saying CapCut works everywhere | It doesn't (see capcut.md). The MP4 route always works |
 | Fixing QA failures by lowering the bar | Fix the edit, re-run QA |
+
+## Codex render checks (required)
+- Fixed caption position is the default. Do not move individual words to gestures unless explicitly requested. Preserve one global caption zone; move cards away from it.
+- Put a hook where the user points, using sampled frames at the actual spoken time. Use `single_line: true` for a single-line title. Editable `editorial` layouts support per-word x/y/size and soft shadows. Check actual font bounds in rendered frames.
+- All sound names must resolve to files. `sparkle`/`coin` fall back to chime; unknown/missing sounds stop the build. For chosen licensed sounds, use `brand.sfx_files`, paths relative to REELS_HOME. Local defaults are synthesized approximations, never claim they are CapCut originals. Audition with speech and adjust sfx_gain_db; normalization is not a substitute for a balanced mix.
+- Never add a static polygon/CSS clip to a moving person's cutout. It can clip the face and hair. Refine the alpha media, preserve the entire head, inspect at least five frames including start/end plus motion peaks. If segmentation fails, use the original footage with non-occluding layouts and explain the limitation.
+- Use actual supplied screenshots for the torso carousel. `orbit_carousel` and `guide_scroll` need a timed alpha source matching the master segment; no source-video uploads.
+- Open the localhost review URL after starting review_server.py with --enable-builds. Do not promise that a dashboard appears automatically without starting its server.
+- Setup commands must be available through the local setup page's copy buttons. PDF text selection alone is not the install path.

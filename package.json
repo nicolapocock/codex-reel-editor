@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "gsap": "3.13.0",
+    "hyperframes": "0.8.157"
+  },
+  "name": "codex-reel-editor",
+  "private": true,
+  "version": "0.1.0"
+}

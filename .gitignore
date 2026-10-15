@@ -5,3 +5,15 @@ skills/reel-editor/engine/hf/
 skills/reel-editor/engine/sfx/
 __pycache__/
 *.pyc
+
+reels/
+
+node_modules/
+
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+output/
+.hyperframes/

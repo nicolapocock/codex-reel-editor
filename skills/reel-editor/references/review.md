@@ -1,29 +1,27 @@
-# Reel Review page
+# Local Reel Review
 
-A private page on the person's claude.ai account where they approve the edit before anything renders: cuts, graphics, captions, sound and colour, then a draft preview with timestamped notes. It needs Claude Code with Artifacts (the `Artifact` and `ArtifactData` tools) and the `db` + `assets` capabilities. If those aren't available, review in chat instead (rough-cut lines, then a card list) and skip this file.
+The review page runs on localhost and saves decisions into the reel folder. Footage stays local. Run commands with the same `REELS_HOME` used for the brand and edit. Script paths below are relative to this skill.
 
-## One time per reel
+## Prepare
 
-1. After transcribing and cleaning audio, run `python3 scripts/tighten.py <reel> --detect` so the "um"s are found (it writes `fillers.json`; without it the page shows no grey "um"s and none get cut). If it installs local Whisper first, that's normal. If it prints `FILLERS NOT DETECTED` (exit code 3), tell them the "um"s won't be cut automatically and that they can tap them out on the page. Then write `proposal.json` in the reel folder (format in the header of `scripts/review_sync.py`): the kept lines, accent words, and every graphic anchored to a spoken word with its `place` box and sound.
-2. `python3 scripts/review_sync.py export <reel> proposal.json <out>` → `<out>/reel.json` (also saved as `<reel>/review_reel.json`).
-3. Make the assets (keep them light, `nice -n 15`):
-   - a 540x960 source proxy of `raw.mov` with the **cleaned** `voice.wav` as its audio (h264, ~900 kbps). The raw phone audio is ~20 dB quieter, so a proxy with it makes the voice sound broken
-   - per graphic: `thumb_<id>.jpg` (180x320 frame at its anchor word) and `img_<id>.jpg` (its screenshot/image, 480 wide)
-   - `audio_original.mp4` / `audio_cleaned.mp4` (same 10 s), `colour_before.jpg` / `colour_after.jpg` (same frame, grade applied), `sfx_<name>.mp4` for each sound
-   - the brand's caption fonts (.otf/.ttf/.woff2) **only if the person owns them and the page stays private**
-   Asset uploads accept mp4 (audio too), jpg/png, fonts; not m4a or wav.
-4. First time only: publish `review/reel-review.html` with `files: {"core.js": "review/core.js"}`, `capabilities: {"db": {"rules": [{"path": "reel", "write": "admin"}, {"path": "builds", "write": "admin"}]}, "assets": {}}` (only editors can change the reel data and the preview; anyone you share it with at Contributor level can still record review decisions), `icon: "video"`. Later reels reuse the same page URL.
-5. Upload the assets to the page (`asset: true`, up to 25 per call), then write `reel/current` = `reel.json` plus `srcUrl`, per-graphic `thumbUrl`/`imgUrl`, `assets` {audioOriginal, audioCleaned, colourBefore, colourAfter, sfx{name:url}}, `fonts` {body, accent}. Delete `review/current` and `builds/latest` from the previous reel (ask first if they hold notes).
-6. Send the link. Tell them: tap words to cut, tap ⏸ / grey "um"s to keep them, Play rough cut to watch the live cut, then Build preview.
+1. After transcription and audio cleanup, run `python3 scripts/tighten.py <reel> --detect`. Exit 3 means fillers were not detected: disclose that limitation. Write `proposal.json` using the schema in `scripts/review_sync.py` (kept source spans, accent words, cards anchored to spoken words).
+2. `python3 scripts/review_sync.py export <reel> <proposal.json> <reel>/review-export`. This also writes `<reel>/review_reel.json`.
+3. Create `<reel>/review-assets/source.mp4`, a 540x960 proxy of the raw footage with `voice.wav` as its audio. Example (replace raw extension as needed):
+   ```bash
+   mkdir -p "<reel>/review-assets"
+   ffmpeg -y -i "<reel>/raw.mov" -i "<reel>/voice.wav" -map 0:v:0 -map 1:a:0 -vf "scale=540:960:force_original_aspect_ratio=increase,crop=540:960" -c:v libx264 -preset veryfast -b:v 900k -c:a aac -shortest "<reel>/review-assets/source.mp4"
+   ```
+4. Set `srcUrl` in `review_reel.json` to `/media/review-assets/source.mp4`. Add per-card `thumbUrl` and `imgUrl`, sound comparisons, colour comparisons, SFX and fonts when prepared, all as `/media/<relative-path>` URLs. Copy assets inside the reel folder; the server rejects paths outside it. Only use fonts the user owns. Omit unavailable assets rather than showing broken comparisons.
+5. Run `python3 scripts/review_server.py <reel>` as a background terminal session. It prints a localhost URL with a free port. Open it in Codex's browser panel when available, otherwise provide a link. Do not bind to a public address. Tell the user to tap words and review graphics, captions, sound and colour, then select Build preview and say “build preview” in chat. The button saves a request; rendering is performed by Codex after reading it.
 
-## When they say "build preview"
+## Build preview
 
-1. `ArtifactData get review/current` (save to a file). Missing is fine: it means "use the proposal".
-2. `python3 scripts/review_sync.py import <reel> <review.json>` → `edl.json` + `edit.json`. Act on every `CHANGE REQUESTED`, `NOTE` and `REVISION` line it prints before rendering; `BRAND CHANGE REQUESTED` only touches brand.json after they confirm.
-3. `REEL_PREVIEW=1 python3 scripts/cut.py <reel>` then `REEL_PREVIEW=1 bash scripts/render.sh <reel>` (1080p, 2 workers, low priority).
-4. Grab frames at every graphic and the longest caption words; fix anything out of frame before sending.
-5. 540p proxy of `final.mp4` → upload → `ArtifactData set builds/latest` {url, hash (from edit.json), at, cutDur}. The page compares that hash with the live decisions and marks the preview outdated when they change.
+1. Read `<reel>/review_decisions.json`. If absent, ask whether to use the proposal; absence is not approval. Wait for their approval before cutting.
+2. `python3 scripts/review_sync.py import <reel> <reel>/review_decisions.json`. Handle every printed change request, note and revision before rendering. Confirm requested persistent brand changes before updating the brand.
+3. `REEL_PREVIEW=1 python3 scripts/cut.py <reel>` then `REEL_PREVIEW=1 bash scripts/render.sh <reel>`. Check frames at graphics and long captions.
+4. Make `review-assets/preview.mp4`, a 540p proxy of `final.mp4`. Write `<reel>/review_build.json` with `url: "/media/review-assets/preview.mp4"`, `hash` from `edit.json`, `at` (ISO timestamp) and `cutDur` (preview duration). The open page polls for this file and marks it stale when decisions change.
+5. Read timestamped revisions from the decisions file before making the next preview. Keep the review server session alive while reviewing, and stop it when finished.
 
 ## Final
 
-After they approve the draft: `bash scripts/render.sh <reel> --final` (the brand resolution; it re-cuts the 1080p preview master first), QA, deliver, and on the CapCut route `--capcut` plus `capcut_draft.py`.
+After draft approval, run `bash scripts/render.sh <reel> --final`, QA and delivery. Follow `capcut.md` only for a requested editable draft. Retain review decisions with the reel; do not overwrite another reel's notes.

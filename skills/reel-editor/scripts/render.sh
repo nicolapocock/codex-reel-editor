@@ -22,7 +22,9 @@ fi
 [ -s "$S/../engine/gsap.min.js" ] || bash "$S/setup_engine.sh"
 stamp "build:start"; python3 "$S/build_reel.py" "$REEL" ${ARGS[@]+"${ARGS[@]}"}; stamp "build:end"
 stamp "render:start"
-nice -n 15 npx -y hyperframes@0.8.145 render "$REEL/proj" --workers "$WORKERS" -o "$REEL/final.mp4" --resolution "$RES" --quality delivery --quiet
+CLI="${HYPERFRAMES_CLI:-$S/../../../node_modules/hyperframes/bin/hyperframes.mjs}"
+if [ -f "$CLI" ]; then HF=(node "$CLI"); else HF=(npx -y hyperframes@0.8.157); fi
+nice -n 15 "${HF[@]}" render "$REEL/proj" --workers "$WORKERS" -o "$REEL/final.mp4" --resolution "$RES" --quality delivery --quiet
 stamp "render:end"
 # Final mix. Optional music bed (brand.json "music": path) sits ~18 dB under the voice and ducks further while she talks.
 # Then bring the whole mix to -14 LUFS (video copied, not re-encoded).

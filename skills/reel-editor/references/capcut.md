@@ -15,12 +15,8 @@ Never promise it works. If the connector fails, deliver the MP4 and say why.
 ## One-time setup
 
 1. A free CapCut account.
-2. Add CapCut's connector to Claude Code:
-   ```bash
-   claude mcp add --transport http --scope user capcut_creation https://www.capcut.com/api/external_mcp
-   ```
-   Then in Claude Code run `/mcp`, pick `capcut_creation`, and log in to CapCut in the browser.
-3. Get CapCut's helper scripts: download the official CapCut plugin from https://www.capcut.com/tools/capcut-x-codex, unzip it, and set `CAPCUT_SKILLS_DIR` to its `skills` folder (the one containing `capcut-stdraft-builder` and `capcut-upload`). Don't run its installer - it targets a different app.
+2. Install and connect the official CapCut plugin in Codex. Check available account tools in the current session; do not assume a connection from files alone.
+3. Set `CAPCUT_SKILLS_DIR` to the installed plugin's skills folder (containing `capcut-stdraft-builder` and `capcut-upload`). Load those skills before upload or draft actions. Use their current collaboration workflow for importing a draft and obtaining an editor link.
 4. Fonts: CapCut's connector only offers a small font list. To use the person's brand font, they add it to their CapCut brand kit, apply it to one caption in the editor, then you read its `vimo://` URI back with `get_stdraft_snapshot` and save it as `capcut_font` in brand.json.
 
 ## What step 5 must produce on this route

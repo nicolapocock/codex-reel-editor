@@ -1,4 +1,6 @@
-<title>Reel Review</title>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>getgitgirl · reel studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700;800&family=Caveat:wght@700&family=JetBrains+Mono:wght@500&display=swap">
 <style>
@@ -120,8 +122,13 @@ details{margin-top:14px;border:2px solid var(--line);border-radius:12px;padding:
 summary{cursor:pointer;font-weight:700}
 .empty{padding:20px;border:2px dashed var(--line);border-radius:16px;color:var(--muted)}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:14px}
+
+*{box-sizing:border-box}body{margin:0}a{color:inherit}.studio-header{max-width:1200px;margin:auto;padding:24px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);gap:18px}.wordmark{font-size:22px;font-weight:800;text-decoration:none;letter-spacing:-1px}.wordmark span{font-weight:400;font-size:16px;letter-spacing:0;color:var(--muted)}.studio-header>div{display:flex;gap:20px;align-items:center;font-size:13px}.version,.eyebrow{font:500 10px var(--f-mono);letter-spacing:1.6px;color:var(--muted)}.welcome{max-width:1200px;margin:auto;padding:30px 16px 12px}.welcome h1{font-family:var(--f-body);font-size:52px;letter-spacing:-2px;color:var(--ink);margin:8px 0}.welcome p{color:var(--muted);margin:12px 0}.player-title{font-size:18px;margin:0}.adjustments{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:20px;display:flex;gap:24px;flex-wrap:wrap}.adjustments label{flex:1;min-width:170px;font-size:13px;font-weight:700}.adjustments input[type=range]{display:block;width:100%;margin-top:12px;accent-color:var(--pink)}.adjustments output{font-family:var(--f-mono);color:var(--muted);float:right}.adjustments select{display:block;margin-top:8px;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}.download{display:inline-block;padding:8px 16px;border-radius:999px;background:var(--pink);color:#141414;font-weight:700;text-decoration:none;font-size:14px}.download[hidden]{display:none}.build-progress{font-size:14px;margin:12px 0;white-space:pre-wrap;color:var(--muted)}button:disabled{opacity:.5;cursor:wait}@media(max-width:600px){.version{display:none}.welcome h1{font-size:40px}.wordmark span{display:none}}
 </style>
 
+</head><body>
+<header class="studio-header"><a class="wordmark" href="/">getgitgirl<span> / reel studio</span></a><div><span class="version">LOCAL TEST BUILD</span><a href="/setup" target="_blank">Setup &amp; help ↗</a></div></header>
+<div class="welcome"><span class="eyebrow">YOUR FOOTAGE. YOUR FINAL SAY.</span><h1>Make it yours.</h1><p>Review the cut, fine-tune your captions, then build a preview. Everything saves on this computer.</p></div>
 <div class="wrap">
   <aside class="side">
     <h1>reel review</h1>
@@ -168,16 +175,18 @@ summary{cursor:pointer;font-weight:700}
 
     <section data-p="captions" hidden>
       <p class="lede">Captions follow your cuts: a caption whose words you cut disappears, and times move with the edit. Tap a word to make it an accent. <b>edit</b> fixes wording, ±0.1 nudges the start, <b>merge</b> joins it with the next. The player shows a static style preview in your fonts; the final captions also animate in.</p>
+      <div class="adjustments"><label>Caption position <output id="cap-y-value"></output><input id="cap-y" type="range" min="200" max="1550" step="10"></label><label>Caption size <output id="cap-size-value"></output><input id="cap-size" type="range" min="32" max="150" step="2"></label></div>
       <div class="tally" id="captally"></div>
       <div class="caps" id="caps"><div class="empty">Captions appear here once the reel loads.</div></div>
     </section>
 
     <section data-p="sound" hidden>
+      <div class="adjustments"><label>Voice track<select id="audio-mode"><option value="cleaned">Cleaned voice</option><option value="original">Original voice</option></select></label><p>Compare below, then choose the track for your preview. Export volume is levelled in both modes.</p></div>
       <h2>Voice clean-up</h2>
-      <p class="lede">The same 10 seconds, before and after: light noise removal, de-essing, EQ and compression, levelled to Instagram's loudness.</p>
+      <p class="lede">The same 10 seconds, before and after: light noise removal, de-essing, EQ and compression, levelled for consistent playback.</p>
       <div class="pair" id="audio"></div>
       <h2>Colour</h2>
-      <p class="lede">One representative frame, before and after the grade: slightly warm, gently lifted shadows, softened bright windows, restrained saturation.</p>
+      <p class="lede">Compare the original with your configured grade, when one is supplied.</p>
       <div class="pair" id="colour"></div>
       <h2>Sound effects</h2>
       <p class="lede">Each sound sits on a graphic's entrance, at the cut time shown. Play to hear it; switch off any you don't want. These are the local preview sounds. On the CapCut route, CapCut's library versions replace them.</p>
@@ -185,9 +194,9 @@ summary{cursor:pointer;font-weight:700}
     </section>
 
     <section data-p="preview" hidden>
-      <p class="lede">Build preview renders a draft from your current decisions (about 3 minutes). Watch it, then add notes at exact moments before the final 4K export.</p>
+      <p class="lede">Build preview renders a draft from your current decisions (render time varies). Watch it, then add notes at exact moments before the final export at your chosen resolution.</p>
       <div class="state" id="bstate">No preview built yet.</div>
-      <div class="ctl"><button class="b primary" id="build" type="button">Build preview</button></div>
+      <div class="ctl"><button class="b primary" id="build" type="button">Build preview</button><a class="download" id="download" hidden download>Download preview ↓</a></div><p id="build-progress" class="build-progress" role="status" aria-live="polite"></p>
       <h2>Notes on the draft</h2>
       <div class="ctl"><input type="text" id="revtext" placeholder="What to change at this moment"><button class="b" id="revadd" type="button">Add note at current time</button></div>
       <div id="revs"></div>
@@ -211,27 +220,33 @@ summary{cursor:pointer;font-weight:700}
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const v = $("#v"), ov = $("#ov");
 const fmt = t => `${Math.floor(t / 60)}:${(Math.max(0, t) % 60).toFixed(1).padStart(4, "0")}`;
+let buildStatus = {}, pendingWrites = 0, editRevision = 0;
 let R = null, B = null, S = blank(), P = null, CAPS = [], GFX = [];
 let tab = "cuts", ref = null, saving = Promise.resolve(), timer = null, undo = [], mode = "idle", loop = null;
-function blank() { return { cut: null, restoredFillers: [], restoredPauses: [], trimmedPauses: [], captions: null, board: {}, sfxOff: {}, notes: {}, brandRequest: "", revisions: [], buildRequest: null }; }
+function blank() { return { cut: null, restoredFillers: [], restoredPauses: [], trimmedPauses: [], captions: null, board: {}, sfxOff: {}, notes: {}, brandRequest: "", revisions: [], buildRequest: null, captionStyle: {}, audioMode: "cleaned" }; }
 
 // ---------- saving, undo ----------
 const pill = (t, err) => { $("#save").textContent = t; $("#save").classList.toggle("err", !!err); $("#retry").hidden = !err; };
 let dirty = false, mine = null;   // dirty: local edits not yet sent; mine: updatedAt of our last write (to spot other writers)
 function queueSave() {
-  clearTimeout(timer); dirty = true; pill("Unsaved changes…");
-  timer = setTimeout(saveNow, 600);
+  clearTimeout(timer); dirty = true; editRevision++; pill("Unsaved changes…");
+  timer = setTimeout(() => saveNow().catch(() => {}), 600);
 }
 function saveNow() {
-  if (!ref) { pill("Not connected: changes won't save", true); return; }
-  dirty = false;
+  clearTimeout(timer);
+  if (!ref) return Promise.reject(new Error("Not connected"));
+  const revision = editRevision;
   const body = JSON.parse(JSON.stringify({ ...S, updatedAt: new Date().toISOString() }));
-  mine = body.updatedAt;
-  pill("Saving…");
-  saving = saving.then(() => ref.set(body)).then(() => pill("Saved " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })),
-    e => pill("Couldn't save (" + (e?.code || "error") + ")", true));
+  mine = body.updatedAt; pendingWrites++; pill("Saving…");
+  const attempt = saving.catch(() => {}).then(() => ref.set(body));
+  saving = attempt.then(() => {
+    if (revision === editRevision) {dirty = false; pill("Saved " + new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}));}
+  }, e => {dirty = true; pill("Couldn't save. Your changes are still here — retry.", true); throw e;}).finally(() => pendingWrites--);
+  saving.catch(() => {});
+  return saving;
 }
-$("#retry").addEventListener("click", saveNow);
+window.addEventListener('beforeunload', e => {if(dirty || pendingWrites){e.preventDefault();e.returnValue='';}});
+$("#retry").addEventListener("click", () => saveNow().catch(() => {}));
 function mutate(fn) {
   undo.push(JSON.stringify(S)); if (undo.length > 60) undo.shift();
   fn(); $("#undo").disabled = false; recompute(); renderAll(); setPos(pos); queueSave();
@@ -253,7 +268,7 @@ function showTab(t) {
   $("#notes").value = S.notes[t] || ""; $("#resetbox").hidden = t === "preview";
   stopPlay();
   if (t === "preview") { if (B?.url && v.getAttribute("src") !== B.url) { v.setAttribute("src", B.url); v.load(); } $("#rough").hidden = $("#back5").hidden = $("#fwd5").hidden = true; $(".scrub").hidden = true; v.controls = true; }
-  else { if (v.getAttribute("src") !== R.srcUrl) { v.setAttribute("src", R.srcUrl); v.load(); } $("#rough").hidden = $("#back5").hidden = $("#fwd5").hidden = false; $(".scrub").hidden = false; v.controls = false; }
+  else { if (v.getAttribute("src") !== (S.audioMode === "original" ? R.srcOriginalUrl || R.srcUrl : R.srcUrl)) { v.setAttribute("src", (S.audioMode === "original" ? R.srcOriginalUrl || R.srcUrl : R.srcUrl)); v.load(); } $("#rough").hidden = $("#back5").hidden = $("#fwd5").hidden = false; $(".scrub").hidden = false; v.controls = false; }
   overlay(0);
 }
 $$(".tab").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
@@ -312,7 +327,7 @@ function playRough(fromCut = pos) {
   loop = requestAnimationFrame(tick);
 }
 $("#rough").addEventListener("click", () => { if (mode === "rough") { stopPlay(); mode = "roughPaused"; overlay(pos); } else playRough(pos); });
-v.addEventListener("error", () => pill("The video didn't load. Reload the page; if it keeps failing, ask Claude to re-upload it.", true));
+v.addEventListener("error", () => pill("The video didn't load. Reload the page; if it keeps failing, ask Codex to check the local proxy file.", true));
 
 // overlay at a cut time: approximate graphic boxes + caption style preview
 function overlay(c) {
@@ -332,7 +347,7 @@ function box(g, label) {
   return el;
 }
 function capEl(cap) {
-  const st = R.style, W = $("#player").clientWidth, one = cap.words.length === 1;
+  const st = {...R.style, ...S.captionStyle}, W = $("#player").clientWidth, one = cap.words.length === 1;
   const el = document.createElement("div"); el.className = "capov" + (st.editorial && !one ? " ed" : "");
   const base = st.capSize / 1080 * W * (one ? 1.35 : 1);
   Object.assign(el.style, { top: st.capY / 19.2 + "%", fontFamily: "rb, var(--f-body)", fontSize: base + "px", color: st.cap });
@@ -467,6 +482,9 @@ const box_ = g => box(g, false);
 // ---------- 3. captions ----------
 function capsEditable() { if (!S.captions) S.captions = JSON.parse(JSON.stringify(R.captions)); return S.captions; }
 function renderCaptions() {
+  const style={...R.style,...S.captionStyle};
+  $("#cap-y").value=style.capY; $("#cap-y-value").textContent=Math.round(style.capY/19.2)+"% down";
+  $("#cap-size").value=style.capSize; $("#cap-size-value").textContent=style.capSize+" px";
   const box = $("#caps"); box.textContent = "";
   const live = CAPS.filter(c => !c.gone);
   for (const c of CAPS) {
@@ -519,6 +537,7 @@ function renderCaptions() {
 
 // ---------- 4. sound & colour ----------
 function renderSound() {
+  $("#audio-mode").value=S.audioMode || "cleaned";
   const A = R.assets || {};
   const fig = (label, el) => { const f = document.createElement("figure"); const c = document.createElement("figcaption"); c.textContent = label; f.append(c, el); return f; };
   const au = u => { const a = document.createElement("audio"); a.controls = true; a.preload = "none"; a.src = u; return a; };
@@ -546,8 +565,10 @@ function renderPreview() {
   st.className = "state";
   if (B?.url && B.hash === h) { st.textContent = `Preview is up to date (built ${new Date(B.at).toLocaleString()}). Press play on the video.`; st.classList.add("ok"); }
   else if (B?.url) { st.textContent = "Preview is outdated: you've changed decisions since it was built. Build again to see them."; st.classList.add("out"); }
-  else if (S.buildRequest?.hash === h) st.textContent = "Build requested. Tell Claude \"build preview\" in chat; the page can't start a render on its own.";
+  else if (S.buildRequest?.hash === h) st.textContent = "Build requested. Tell Codex \"build preview\" in chat; the page can't start a render on its own.";
   else st.textContent = "No preview built yet. Build one when your decisions look right.";
+  const download=$("#download");download.hidden=!B?.url;
+  if(B?.url){download.href=B.url;download.download='getgitgirl-preview.mp4';}
   const revs = $("#revs"); revs.textContent = "";
   S.revisions.forEach((r, k) => {
     const row = document.createElement("div"); row.className = "rev";
@@ -560,7 +581,27 @@ function renderPreview() {
   });
   if (!S.revisions.length) revs.innerHTML = `<div class="empty">No notes yet. Pause the draft where something's off, describe it, and add the note.</div>`;
 }
-$("#build").addEventListener("click", () => mutate(() => { S.buildRequest = { hash: ReelCore.hash(decisions()), at: new Date().toISOString() }; }));
+$("#build").addEventListener("click", async () => {
+  $("#build").disabled=true;
+  try {
+    await saveNow();
+    const response=await fetch('/api/build',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(decisions())});
+    const data=await response.json();if(!response.ok)throw new Error(data.error || 'Could not start preview');
+    buildStatus=data;renderPreview();
+  } catch(e) {$("#build-progress").textContent=e.message;}
+  finally {$("#build").disabled=['queued','running'].includes(buildStatus.state);}
+});
+for (const [id,key] of [['cap-y','capY'],['cap-size','capSize']]) {
+  $("#"+id).addEventListener('input', e => {const value=+e.target.value;mutate(()=>{S.captionStyle[key]=value;});mode='roughPaused';overlay(pos);});
+}
+$("#audio-mode").addEventListener('change',e=>{const value=e.target.value;mutate(()=>S.audioMode=value);showTab(tab);});
+async function pollBuild(){
+  try {const response=await fetch('/api/status');buildStatus=await response.json();
+    $("#build").disabled=buildStatus.enabled===false || ['queued','running'].includes(buildStatus.state);
+    $("#build-progress").textContent=buildStatus.state==='idle' ? 'Builds locally on this computer. You can keep reviewing while it runs.' : buildStatus.message || '';
+  } catch(e){$("#build-progress").textContent='Cannot reach the editor. Keep this tab open and restart the local server.';}
+}
+pollBuild();setInterval(pollBuild,1500);
 $("#revadd").addEventListener("click", () => {
   const text = $("#revtext").value.trim(); if (!text) { $("#revtext").focus(); return; }
   if (!B?.url) { pill("Build a preview first, then add notes at moments in it.", true); return; }
@@ -573,13 +614,34 @@ function renderAll() {
   $$(".tab").forEach(b => { const d = b.querySelector(".dot"); if (d) d.hidden = !sent[b.dataset.tab]; });
 }
 
+// Local adapter preserves the review UI's document contract.
+const localDB = { doc(path) {
+  const endpoint = '/api/' + path;
+  const get = async () => {
+    const res = await fetch(endpoint, {cache:'no-store'});
+    if (!res.ok) throw new Error('Read failed');
+    const value = await res.json();
+    return {exists:value !== null, data:() => value};
+  };
+  return {get, async set(body) {
+    const res = await fetch(endpoint, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    if (!res.ok) throw new Error('Save failed');
+  }, onSnapshot(fn, fail) {
+    let last;
+    const poll = async () => {try {const snap = await get();const value = JSON.stringify(snap.data());
+      if (value !== last) {last=value;fn(snap);}
+    } catch(e) {fail(e);}};
+    poll(); const id=setInterval(poll,2000); return () => clearInterval(id);
+  }};
+}};
+
 // ---------- load ----------
 (async () => {
-  const db = await window.claude?.use?.("db");
-  if (!db) { pill("This view can't load the reel. Open it from your claude.ai link.", true); $("#reelname").textContent = "Not connected."; return; }
+  const db = localDB;
+  if (!db) { pill("This view can't load the reel. Open the local review server link.", true); $("#reelname").textContent = "Not connected."; return; }
   try {
     const rs = await db.doc("reel/current").get();
-    if (!rs.exists) { $("#reelname").textContent = "No reel loaded yet. Ask Claude to load one."; pill("Nothing to review", true); return; }
+    if (!rs.exists) { $("#reelname").textContent = "No reel loaded yet. Ask Codex to load one."; pill("Nothing to review", true); return; }
     R = rs.data();
     if (R.fonts) {   // brand fonts, so the caption preview uses the real faces
       const css = [["rb", R.fonts.body], ["ra", R.fonts.accent]].filter(f => f[1]).map(([n, u]) => `@font-face{font-family:${n};src:url(${u});font-display:swap}`).join("");
@@ -590,13 +652,13 @@ function renderAll() {
     // someone else (Claude, another tab) changed the decisions: take theirs instead of saving a stale copy over it
     ref.onSnapshot(s => {
       if (!s.exists || !R) return;
-      const d = s.data(); if (d.updatedAt === mine || dirty) return;
+      const d = s.data(); if (d.updatedAt === mine || dirty || pendingWrites) return;
       if (JSON.stringify(d) === JSON.stringify({ ...S })) return;
       S = { ...blank(), ...JSON.parse(JSON.stringify(d)) }; undo = []; $("#undo").disabled = true;
-      recompute(); renderAll(); setPos(pos); pill("Updated by Claude");
+      recompute(); renderAll(); setPos(pos); pill("Updated by Codex");
     }, () => {});
     let firstReel = true;
-    db.doc("reel/current").onSnapshot(() => { if (firstReel) { firstReel = false; return; } pill("Claude loaded new footage: reload the page", true); }, () => {});
+    db.doc("reel/current").onSnapshot(() => { if (firstReel) { firstReel = false; return; } pill("Codex loaded new footage: reload the page", true); }, () => {});
     db.doc("builds/latest").onSnapshot(s => { B = s.exists ? s.data() : null; if (R) renderPreview(); if (tab === "preview") showTab("preview"); }, () => {});
     recompute();
     $("#reelname").textContent = `${R.title} · raw ${fmt(R.srcDur)} → reel ${fmt(P.cutDur)}`; setPos(0);
@@ -606,3 +668,5 @@ function renderAll() {
   } catch (e) { pill("Couldn't load the reel (" + (e?.code || "error") + "). Reload to try again.", true); }
 })();
 </script>
+
+</body></html>

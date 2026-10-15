@@ -1,174 +1,79 @@
-# setup guide (for total beginners)
+# edit your reels with codex
 
-if you've never opened terminal before, this is for you. setup takes about 20 minutes and you only do it once. after that, editing a reel is dragging the video in and answering a couple of questions.
+Private beta · getgitgirl · macOS first
 
-you'll copy and paste a few commands along the way. you don't need to understand them, i promise. every command on this page has a copy button in its top right corner, so you never have to type one out.
+## 1. Get the project
 
----
+Use the desktop app with local Codex access. See the [official app setup](https://learn.chatgpt.com/docs/app) for current downloads and account access. This editor runs against files on your Mac; it is not a custom GPT in ordinary ChatGPT chat.
 
-## start here
+While this repository is private, your GitHub account needs access. Sign in on GitHub, open [the repository](https://github.com/nicolapocock/codex-reel-editor), choose **Code → Download ZIP**, unzip it, and open that folder as a local Codex project. Git users can clone it after authenticating.
 
-**you'll need:**
+## 2. Set it up
 
-- a mac (that's what i've tested on)
-- a paid claude plan (pro or higher)
-- about 10 GB of free space
+Paste this into Codex:
 
-**open this guide on your mac,** not your phone. you'll be copying commands from here into your mac, so it's much easier if they're on the same screen.
-
----
-
-## step 1: get claude
-
-1. go to [claude.com/download](https://claude.com/download), download the claude desktop app, open it and sign in.
-2. click the **</>** icon at the top of the app (next to the speech bubbles). that's the **code** tab, it turns grey when it's on. this is claude code, the version of claude that can work with files on your computer.
-
-![the code tab in the claude app](docs/images/claude-code-tab.png)
-
-leave claude open, you'll come back to it in step 5.
-
-## step 2: open terminal
-
-terminal is an app that's already on your mac. it's where you type commands.
-
-1. press `cmd + space` to open spotlight search.
-2. type `terminal` and press **return**.
-
-a white (or black) window opens with a line ending in `%`. that's the prompt, and it means terminal is ready for a command.
-
-![a fresh terminal window](docs/images/terminal-open.png)
-
-## step 3: install homebrew
-
-homebrew is a free app installer for mac. the video tools come from it.
-
-1. click the copy button on the command below.
-2. click inside the terminal window, press `cmd + v` to paste, then press **return**.
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```text
+Read AGENTS.md and skills/reel-editor/SKILL.md. Set up the Codex reel editor in this project. Use the project's reels folder as REELS_HOME for every command. Check Node.js, Python 3 and ffmpeg. Run npm ci and the doctor check. Help me configure my brand. Open skills/reel-editor/review/setup.html so I can use its copy buttons. Do not upload my footage.
 ```
 
-3. it asks for your **password**. this is the password you use to log in to your mac. type it and press **return**. you won't see any letters or dots while you type, that's normal, it's still working.
+On a Mac that already has Homebrew, the video dependencies are:
 
-![terminal asking for your password](docs/images/terminal-password.png)
-
-4. it may ask you to **press return** to continue. press return.
-5. now wait. it can take 5 to 10 minutes. it's finished when you see **installation successful** and the `%` prompt comes back on the last line.
-
-## step 4: finish homebrew's setup
-
-take this step slowly. if you skip it, the video tools won't install.
-
-at the end of what homebrew printed, scroll up a little until you find **next steps**. under it are two or three lines that start with `echo` or `eval`. they have your mac's name in them, so they're slightly different for everyone, which is why you copy them from your own terminal and not from here.
-
-![the next steps lines to copy](docs/images/terminal-next-steps.png)
-
-1. click and drag over those lines (the ones in the pink box above) to select them.
-2. press `cmd + c` to copy.
-3. click at the bottom of the terminal window, press `cmd + v` to paste, then press **return**.
-
-nothing much prints, that's fine. when the `%` prompt is back, check it worked by pasting this and pressing **return**:
-
-```bash
-brew --version
+```sh
+brew install ffmpeg node python
 ```
 
-if it prints `Homebrew` and a version number, you're good. if it says `command not found: brew`, close terminal, open it again, and run `brew --version` once more.
+If Homebrew is missing, ask Codex to guide you through [the official Homebrew installation](https://brew.sh). Let each command finish. Never copy another person's machine-specific “Next steps”.
 
-## step 5: install the video tools
+Inside the project:
 
-these are the free tools claude uses to cut video and clean up audio. still in terminal, paste this and press **return**:
-
-```bash
-brew install ffmpeg node
+```sh
+npm ci
 ```
 
-this one takes a few minutes and prints a lot. go make a coffee. it's done when the `%` prompt comes back on the last line.
+Install HyperFrames skills if missing:
 
-you can close terminal now. you won't need it again for normal editing.
-
-## step 6: install the reel editor (back in claude)
-
-go back to the claude app, on the **code** tab. paste this into the message box and press **return**:
-
-```
-install the reel editor from github.com/nicolapocock/claude-reel-editor and the hyperframes skills it needs (npx skills add heygen-com/hyperframes), then run its doctor check and tell me if anything is missing
+```sh
+npx skills add heygen-com/hyperframes
 ```
 
-claude does the rest. **claude may ask permission to install the tools.** check that what it's asking about relates to this setup (the reel editor, hyperframes, ffmpeg, node) before you approve it.
+Choose Codex when prompted. Check the setup:
 
-at the end it runs a check and shows you a list with ticks. you're done when the last line says **READY**.
+```sh
+bash skills/reel-editor/scripts/doctor.sh
+```
 
-![a finished check that says READY](docs/images/check-ready.png)
+READY means the required tools are present. READY WITH LIMITS means an optional feature is unavailable. If a required tool is missing, paste the error into Codex. The first setup downloads engine assets and may take several minutes.
 
-**READY WITH LIMITS** is fine too. it means something optional is missing, like the noise remover or capcut, and you can still edit. the ⚠️ lines tell you what you'd gain by adding it.
+## 3. Set your brand once
 
-if any line has a ❌, copy the whole message, paste it back to claude and say "fix this".
+Provide your colours, licensed font files, caption style, pacing and a reference reel. Fixed caption positioning is the default. Headline shadows are included. Use actual screenshots for carousels.
 
-## step 7: your first reel
+Sounds: local defaults are simple synthesized effects, not the originals in CapCut. Give Codex sound files you have permission to use and ask it to configure `sfx_files` in your brand. Audition them with your voice before finalising. Missing sound files now stop the render instead of disappearing silently.
 
-1. film yourself talking to camera on your phone. under 2 minutes is easiest for your first one.
-2. airdrop or copy the video to your mac.
-3. in claude code, type **edit this into a reel** and drag the video file into the message box. press **return**.
-4. **first time only:** claude asks you about your brand, one question at a time (colours, fonts, caption style, sounds, and how tight you want the pacing. natural is the default and keeps your normal pauses). the most useful thing you can give it is a reel you wish you'd made, so have a link ready. this part takes about 5 minutes.
-5. claude sends you a link to your **reel review** page. it's private, on your claude.ai account. open it and:
-   - press **play rough cut** to watch the edit with your changes as you make them. use −5s / +5s or drag the bar to move around.
-   - **cuts:** tap a word to cut it, or tap a crossed-out word to bring it back. grey dotted words are "um"s and ⏸ chips are pauses it removed, tap one to keep it.
-   - **graphics:** keep, change (say what) or drop each one. the little picture shows roughly where it sits.
-   - **captions:** tap a word to make it a highlight word, tap **edit** to fix spelling, **merge** to join two.
-   - **sound & colour:** listen to your voice before and after, and switch off any sound effect you don't like.
+## 4. Your first reel
 
-   everything saves as you go, and **undo** is there if you change your mind.
+Film a short talking-head clip and save it on your Mac. Give Codex its full path, then paste:
 
-   **no review page link?** if your claude code doesn't have artifacts yet, claude does the review with you in chat instead. it shows your transcript as numbered lines with the cuts it suggests, then the graphics it plans. reply with the line numbers to keep or cut and what to change, and say yes when you're happy. claude then builds the draft and tells you where the video is on your mac. watch it, and tell claude in chat what to change, with the time it happens (for example "at 0:12 the caption covers my face"). that replaces steps 5 to 7.
-6. **make the preview. this takes two clicks in two places:**
-   1. on the review page, click **build preview**.
-   2. go back to claude code and type **build preview**, then press **return**.
+```text
+Edit this raw clip with the reel-editor skill. Preserve my original. Use my saved brand and keep captions in one fixed position with a soft shadow. Show me the proposed cuts and graphics before cutting. Start the local review server with --enable-builds and open its URL. Check hook placement against my gestures and preview all head/hair edges for any cutout effects.
+```
 
-   about 4 minutes later the draft shows up in the **preview** tab of the review page.
-7. watch it. if something's off, pause there, describe it, and press **add note at current time**. tell claude when you're done and it fixes those spots.
-8. when you're happy, type **final** in claude code. your full-quality reel (at the resolution you picked in setup) lands in **movies → reels** on your mac. airdrop it to your phone and post.
+The local review page opens once Codex has prepared the transcript and started its server. Correct words, approve cuts and adjust graphics. Click **Build preview**. Simple saved decisions can render directly; written creative changes need Codex to apply them first. The page tells you when that is needed. Keep the server running while reviewing.
 
-from your second reel on, it's just steps 7.1 to 7.3, then 7.5 to 7.8. your brand is saved, so every edit already looks like you.
+## 5. Review, revise, export
 
-## want the capcut version too? (optional)
+Watch with sound. Check names, cut joins, hook placement, shadow, caption position, sound levels and the entire head/hair during cutouts. Leave a timestamp and describe the change. When happy, tell Codex “final”. It supplies the checked MP4 in your configured delivery folder.
 
-capcut gives you an editable version where every caption and sound effect is its own layer, so you can change those yourself after. the graphics, screenshots and hook title come baked into the video, so change those on the review page before you build.
+Optional CapCut delivery needs the installed CapCut plugin and an account connection. Availability depends on that connection. Graphics are baked into the video; ask for graphic changes before final export. Follow the skill's CapCut reference, not Claude terminal commands.
 
-**check this first:** it doesn't work in the us (capcut's connector isn't available there yet) or india (the capcut app isn't available). everywhere else it usually works. if you're in either place, skip this, you'll still get the full finished reel.
+## If you get stuck
 
-1. make a free account at [capcut.com](https://www.capcut.com).
-2. paste this into claude code and press **return**:
+- **Cannot copy a command:** open `skills/reel-editor/review/setup.html` and use Copy. If clipboard access is blocked, the entire command is selected for Command+C.
+- **No review page:** ask Codex to run `prepare_review.py`, start `review_server.py --enable-builds`, then open the printed localhost URL. No claude.ai login is required.
+- **Sound missing:** check `sfx_files` paths and run engine setup. Do not replace a missing file with silence.
+- **Hook misplaced:** supply a timestamp; Codex should inspect that frame and use explicit positions. Request `single_line: true` for an unbroken title.
+- **Captions wander:** keep `captionStyle.fixedPosition` enabled. It ignores older per-word position overrides.
+- **Hair clipped:** remove any static CSS polygon mask. Refine the alpha cutout and inspect the whole segment; if it still fails, use a layout without a cutout.
+- **Build failed:** the last successful review preview is retained. Ask Codex to inspect `review_build.log`.
 
-   ```
-   set up the optional capcut route for the reel editor, following references/capcut.md in the skill
-   ```
-
-   claude adds capcut's connector for you. if it asks permission, check the request is about capcut before you approve it.
-
-3. log in to capcut once. open terminal, type `claude` and press **return**. then type `/mcp` and press **return**, pick `capcut_creation`, and sign in with your capcut account when the browser opens. after that, every reel comes with a capcut link as well.
-
-## want to build your own?
-
-if you'd like to understand how this works or build your own version, read [build it yourself](BUILD-IT-YOURSELF.md). it has the prompts i used, in order.
-
-## if something goes wrong
-
-| what you see | what to do |
-|---|---|
-| `command not found: brew` | close terminal and open it again. still broken? redo step 4, copying the next steps lines from your own terminal |
-| `command not found: ffmpeg` or `node` | run `brew install ffmpeg node` again |
-| terminal seems frozen after the password | it's working, the letters are hidden on purpose. type your password and press return |
-| the check says something is ❌ | paste the whole message into claude code and say "fix this" |
-| capcut won't connect | if you're in the us or india, that's capcut's region block and there's nothing to fix. anywhere else, ask claude to log you in to capcut again |
-| the review page won't load | open it from the link claude gave you, signed in to your claude.ai account |
-| the rough cut won't play | press play rough cut once more (browsers sometimes block the first play). if it still won't, reload the page |
-| the edit looks off-brand | tell claude what's wrong ("captions are too small", "never use that font"). it adds it to your brand rules so it doesn't happen again |
-| your mac is slow or out of space | you need about 10 GB free. 4k needs 35+ GB, so stick to 1080p if your mac is older |
-
-## changing your style later
-
-your brand lives in two files in a folder called **reels** in your home folder. you never have to open them. tell claude what to change ("make my captions one word at a time", "use pink for highlight words") and it updates them.
-
-stuck anywhere? dm me [@getgitgirl](https://instagram.com/getgitgirl), i'm happy to help.
+Your footage, transcripts, sound files and renders stay outside Git. Do not commit them or API keys. This beta has been exercised on one real reel; broader device testing is still needed before a public launch.

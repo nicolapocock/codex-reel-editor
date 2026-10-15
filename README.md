@@ -1,132 +1,55 @@
-# claude reel editor
+# Codex reel editor
 
-you drop a raw talking-head clip into claude code and get back a finished reel in your own brand, so the audio's cleaned up, the filler words are cut, and the captions and graphics actually match what you're saying. if you want, it also builds a capcut draft where you can change the captions and sounds yourself (the graphics come baked into the video, more on that below).
+A Codex port of [Nicola Pocock's Claude reel editor](https://github.com/nicolapocock/claude-reel-editor). Turn a raw talking-head video into a branded vertical reel, review cuts and captions locally, then render an MP4. Optional editable CapCut delivery uses the installed official CapCut plugin.
 
-the first time you use it, it asks you about your brand (your colours, fonts, caption style, sounds and the call to action you always use) and saves that as a brand file, so every edit after that looks like you.
+This version runs in local Codex. It is not yet a hosted editor inside the ChatGPT web or mobile app.
 
-> **status: early.** i've been using this on my own reels and it's getting better every time, but it's not perfect yet… fonts in capcut are still super fussy and text animations get added by hand. the honest list is under [what it can't do yet](#what-it-cant-do-yet).
+## Start
 
-made by [@getgitgirl](https://instagram.com/getgitgirl).
+Open this repository as a local Codex project, then say:
 
-## what you need
+> Read skills/reel-editor/SKILL.md and set up the reel editor. Use a reels folder inside this project as REELS_HOME. Check dependencies and help me set up my brand.
 
-- a mac (that's what i've tested on, windows and linux are untested)
-- [claude code](https://claude.com/claude-code) on a paid claude plan. the review page uses claude code's artifacts, and if your version doesn't have them claude just does the review with you in chat instead
-- about 10 GB of free disk space
-- optional: a free capcut account, for the editable capcut version
+Requirements: macOS (other systems untested), Python 3, Node.js, ffmpeg, HyperFrames skills and about 10 GB free space. Setup downloads the pinned animation engine and HyperFrames motions. Local Whisper transcription may download a model; ElevenLabs is optional and billed separately.
 
-## install
+Install HyperFrames skills with `npx skills add heygen-com/hyperframes`, choosing Codex when prompted. Then run `bash skills/reel-editor/scripts/doctor.sh`. The doctor may initialize missing engine assets.
 
-if you're new to all this, follow the [step-by-step beginner guide](GUIDE.md), it walks you through everything from scratch.
+Once set up:
 
-already use claude code? open it and paste:
+> Use the reel-editor skill to edit this clip into a reel. Keep my original file intact and show me the local review page before cutting.
 
-```
-install the reel editor from github.com/nicolapocock/claude-reel-editor, plus the hyperframes skills it needs, then run its doctor check and fix anything missing
-```
+Use the full path to your video. Codex reads the brand, transcribes, proposes cuts and graphics, opens the local review page, imports saved decisions, and renders after approval.
 
-or do it yourself in terminal:
+## Review
 
-```bash
-npx skills add heygen-com/hyperframes
-```
+The existing review UI now runs through `review_server.py`, a Python localhost server. Decisions are saved as `review_decisions.json` in each reel folder. Word cuts, captions, graphics, sound decisions and timestamped preview notes use the same `core.js` timing engine as the renderer. Video range requests allow seeking. No Claude artifact account is required.
 
-```bash
-npx skills add nicolapocock/claude-reel-editor
-```
+See [the edit workflow](skills/reel-editor/SKILL.md) and [local review instructions](skills/reel-editor/references/review.md).
 
-then check everything's there (ffmpeg, node, the hyperframes skills):
+## Limits and privacy
 
-```bash
-bash ~/.claude/skills/reel-editor/scripts/doctor.sh
-```
+Rendering and default transcription run locally. Review UI typography currently requests Google Fonts; brand fonts can be served locally. ElevenLabs transcription and optional CapCut uploads send media to those services. CapCut availability and fonts depend on the connected account. Graphics are baked into the video; CapCut captions and sounds can be editable.
 
-## use it
+The port has been checked for review persistence, media seeking, browser interactions and decision import. A real 36-second spoken reel has been rendered and visually reviewed; broader device and footage testing is still needed before public launch. It preserves the upstream editing engine and MIT license. The original guide's Claude instructions have been replaced by [GUIDE.md](GUIDE.md).
 
-1. film yourself talking to camera (phone is fine)
-2. in claude code: **"edit this into a reel"** and drag the video in
-3. first time only: answer the brand questions (about 5 minutes)
-4. claude sends you a private **reel review** page on your claude.ai account. that's where you:
-   - watch the rough cut with your changes applied as you make them (scrub, skip ±5 s)
-   - tap words to cut them, and tap any "um" or pause it removed if you want it back
-   - keep, change or drop each graphic, with a little mockup of where it sits
-   - fix caption wording, pick the highlight words, merge captions
-   - hear the sound clean-up and see the colour grade before and after
-5. hit **build preview**, tell claude "build preview", and watch the draft (about 4 minutes)
-6. leave notes at exact moments in the draft, then say "final" for the full-quality version at the resolution you picked in setup (and a capcut link, if you turned that on). 4K only looks sharper if you filmed in 4K, a 1080p clip doesn't gain detail
+## Verification
 
-nothing renders until you've approved it, so your laptop isn't rendering versions you don't want.
+Run `python3 tests/test_review_server.py` (requires localhost access) and `python3 tests/test_review_import.py` (requires Node.js).
 
-## the capcut part (optional)
+## Private beta improvements
 
-capcut lets you tweak the captions and sounds yourself after the edit, but it doesn't work everywhere yet.
+- One fixed caption zone by default; old gesture overrides are ignored.
+- Soft headline/caption shadows, explicit editorial layouts and single-line hooks.
+- Actual reel-image orbit carousel and six-page guide scroll behind a supplied alpha cutout.
+- Manual CSS subject masks rejected to prevent the head-clipping bug; alpha quality still requires visual review.
+- Sound aliases resolve to existing assets, missing files fail clearly, and licensed local files can override each effect with `sfx_files`.
+- Copy buttons and full-selection fallback on the local setup page.
+- Local review saving, real preview builds, and previous-preview retention on failure.
 
-| where you are | capcut version |
-|---|---|
-| australia, uk, most of europe and asia | ✅ usually works |
-| united states | ❌ capcut's connector isn't available in the us yet |
-| india | ❌ the capcut app isn't available |
+See [the complete beginner guide](GUIDE.md) and [sound configuration](docs/SOUNDS.md). Run `python3 tests/test_edit_policy.py` alongside the review tests. No personal footage or commercial font files are shipped.
 
-if it doesn't work where you are, you still get the full finished reel as an mp4.
+## Guides
 
-what you can change in the capcut draft, and what you can't:
-
-- **editable:** the captions (words, timing, style) and the sound effects
-- **baked into the video:** the graphics, screenshots, carousels and the hook title. change those on the review page before you build, not in capcut
-- **swapped:** capcut can only use fonts from its own library or your capcut brand kit, so captions may look a bit different from the mp4, and some sounds get swapped for the closest one in capcut's library
-
-to turn it on, you add capcut's connector to claude code once. in terminal:
-
-```bash
-claude mcp add --transport http --scope user capcut_creation https://www.capcut.com/api/external_mcp
-```
-
-then log in to capcut: type `claude` in terminal, then `/mcp`, pick `capcut_creation` and sign in with your capcut account in the browser. the rest of the setup (capcut's helper scripts and fonts) is in [`skills/reel-editor/references/capcut.md`](skills/reel-editor/references/capcut.md), or paste "set up the optional capcut route for the reel editor" into claude code and it walks you through it.
-
-## where your footage goes and what costs extra
-
-- **transcription:** runs on your computer with whisper by default, free. if you add an elevenlabs key (optional, for tighter caption timing), your clip's audio is sent to elevenlabs and that's billed to your elevenlabs account
-- **the review page:** small low-res previews of your clip, the graphics and the sound checks are uploaded to a private page on your claude.ai account. only you can see it unless you share it
-- **capcut (if you turn it on):** the finished video and caption files are uploaded to your capcut account
-- **rendering:** happens on your own laptop, so it costs time, not money. a draft takes a few minutes, a 4K final takes longer
-- **claude:** the edit uses your normal claude plan, there's nothing extra to pay
-
-## do i need heygen?
-
-no account or connector needed. hyperframes is made by heygen, but the skills you installed above run on your own computer, so there's nothing to log in to. (heygen's connector is for chat apps that can't run files locally, and for background music, which this setup leaves out.)
-
-## make it yours
-
-everything about how your reels look lives in two files in `~/reels/`:
-
-- `brand.md`: your style in plain english (claude reads this)
-- `brand.json`: the numbers (the scripts read this)
-
-edit them any time, or just tell claude "never use outlined captions again" and it adds that to your rules. [`examples/getgitgirl/`](examples/getgitgirl/) is mine, if you want to see a filled-in one.
-
-## what it can't do yet
-
-- **capcut fonts:** the connector only offers a small font list. to use your own font, add it to your capcut brand kit first.
-- **text animations in capcut:** you add these by hand (select all captions, pick an animation, about 10 seconds).
-- **background music:** not included. add it in capcut or your posting app, where the trending sounds are anyway.
-- **multi-camera edits:** it's built for one person talking to camera.
-- **windows and linux:** untested. the scripts are written for a mac.
-
-## what's in here
-
-```
-skills/reel-editor/
-  SKILL.md                     the edit, step by step
-  references/setup-interview.md   the brand questions
-  references/rough-cut.md      how cuts get proposed
-  references/capcut.md         the optional capcut route
-  references/review.md         the reel review page, step by step
-  review/                      the review page + the timing core it shares with the renderer
-  scripts/                     audio cleanup, transcription, cutting, the reel template, qa, delivery, capcut draft
-  engine/                      animation library, hyperframes motions and sound effects (downloaded or made on first run)
-examples/getgitgirl/           my brand file, as a worked example
-```
-
-built on [hyperframes](https://github.com/heygen-com/hyperframes) for the graphics and captions, and capcut's official connector for the editable version.
-
-[MIT](LICENSE)
+- [Download the six-page Codex guide](docs/getgitgirl-codex-edit-guide.pdf)
+- [Editable Figma guide](https://www.figma.com/design/iTjBqHg2h05yT6j0SBcwWb/?node-id=221-2)
+- [Copyable setup page](skills/reel-editor/review/setup.html) — open locally; GitHub shows its source.

@@ -19,6 +19,8 @@ edit.json (written by auto_edit.py, then Claude marks accents and adds cards):
      sticker {src: "sticker.png", x: 760, y: 420, size: 260}  transparent PNG that bounces on (brand stickers, emoji, logos)
      page   {bg: "image.jpg" or "#hex", title: "how it works"}   full-screen background with the clip framed below it
                                                      (the fast green-screen look: no cut-out, renders in seconds)
+     editorial {layout: [{text, x, y, size, z?}], subject?: "alpha.webm"} positioned hook words; optional synchronized cutout
+     orbit_carousel {images: [...], subject: "alpha.webm"} six reel covers orbiting a synchronized torso cutout
      motion {name: "carousel-vision-1", vars: {...}, box: [x, y, w, h]}   any HyperFrames catalog motion cached in
                                                      engine/hf (see references/motions.md for names + vars). Carousels take
                                                      images: {"images": ["a.png", ...]} and the slots are filled for you.
@@ -27,22 +29,24 @@ edit.json (written by auto_edit.py, then Claude marks accents and adds cards):
   Any card: "glass": true gives the frosted liquid-glass look (card, tag).
   Image paths: relative to the reel folder, or to ~/reels/assets/, or absolute.
 """
-import html, json, os, re, shutil, subprocess, sys
+import html, json, math, os, re, shutil, subprocess, sys
 from pathlib import Path
+from edit_policy import prepare_edit, sound_name
 
 reel = Path(sys.argv[1]).expanduser()
 CAPCUT = "--capcut" in sys.argv
 HOME = Path(os.environ.get("REELS_HOME", "~/reels")).expanduser()
 ENGINE = Path(__file__).resolve().parent.parent / "engine"
 brand = json.load(open(HOME / "brand.json"))
-edit = json.load(open(reel / "edit.json"))
+edit = prepare_edit(json.load(open(reel / "edit.json")), brand)
 
 C = brand["colors"]
 MAIN, POP, LIGHT = C["main"], C["pop"], C.get("light", "#FFFFFF")
 CAP, CAP_ACC = C.get("caption", "#FFFFFF"), C.get("caption_accent", POP)
 CAPS = brand.get("captions", {})
 CASE = CAPS.get("case", "lower")
-CAP_PX, CAP_Y = CAPS.get("size", 96), CAPS.get("y", 1250)
+CAP_PX = max(32, min(150, edit.get("captionStyle", {}).get("capSize", CAPS.get("size", 96))))
+CAP_Y = max(200, min(1550, edit.get("captionStyle", {}).get("capY", CAPS.get("y", 1250))))
 W, H, FPS = 1080, 1920, 30                     # authored at 1080x1920; 4K brands render with --resolution portrait-4k
 SAFE = 900                                     # guardrail: no text line may be wider than this (90 px margin each side)
 EM = 0.66                                      # conservative average glyph width (bold display fonts run ~0.6-0.66 em)
@@ -118,14 +122,24 @@ def sfx(name, t, db=-12, level="subtle", dur=None):
         name, db = {"sparkle": "chime"}.get(CARD_SFX["name"], CARD_SFX["name"]) if not CAPCUT else CARD_SFX["name"], CARD_SFX.get("db", db)
         CARD_SFX = None
     if brand.get("sfx", "subtle") == "none" or (level == "lots" and brand.get("sfx") != "lots") or t >= DUR: return
-    vol = round(min(1.0, 10 ** ((db + brand.get("sfx_gain_db", 8)) / 20)), 3)   # +8 dB: clearly audible under a voice with no music bed
+    vol = round(min(1.0, 10 ** ((db + brand.get("sfx_gain_db", 0)) / 20)), 3)   # explicit brand gain; keep effects under speech by default
     if CAPCUT:
         SFX_OUT.append({"name": CAPCUT_NAME.get(name, name), "t": round(max(t, 0), 2), "vol": vol, **({"dur": dur} if dur else {})}); return
-    p = proj / "sfx" / f"{name}.wav"
-    if not p.exists(): return
+    overrides = brand.get("sfx_files", {})
+    custom = overrides.get(name) or overrides.get(sound_name(name))
+    if custom:
+        source = Path(custom).expanduser()
+        if not source.is_absolute(): source = HOME / source
+        if not source.is_file(): raise ValueError(f"Sound file missing: {source}")
+        p = proj / "sfx" / f"custom-{n_sfx+1}.wav"
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(source), "-ar", "48000", "-ac", "2", str(p)], check=True)
+    else:
+        name = sound_name(name)
+        p = proj / "sfx" / f"{name}.wav"
+    if not p.exists(): raise ValueError(f"Sound {name!r} unavailable. Run setup_engine.sh or set brand.sfx_files.")
     n_sfx += 1
     d = min(dur or dur_of(p), dur_of(p), DUR - t)
-    audio.append(f'<audio id="sx{n_sfx}" src="sfx/{name}.wav" data-start="{q(t)}" data-duration="{q(d)}" '
+    audio.append(f'<audio id="sx{n_sfx}" src="sfx/{p.name}" data-start="{q(t)}" data-duration="{q(d)}" '
                  f'data-track-index="{20 + n_sfx}" data-volume="{vol}"></audio>')
 SFX_OUT = []
 CARD_MUTE = False
@@ -155,7 +169,42 @@ for i, c in enumerate(edit.get("cards", [])):
     a, b, cid = c["start"], c.get("end") or phrase_end(c["start"]), f"k{i}"
     b = min(b, DUR)
     kind = c["type"]
-    if kind == "title":
+    if kind in ("editorial", "orbit_carousel", "guide_scroll"):
+        # These effects share the camera transform with the source footage.
+        # A synchronized alpha foreground provides real subject occlusion.
+        pieces = []
+        if c.get("subject"):
+            source = reel / c["subject"]
+            target = f"subject-{i}{source.suffix}"
+            shutil.copy(source, proj / target)
+            pieces.append(f'<video id="{cid}subject" class="clip" src="{target}" muted playsinline data-start="{q(a)}" data-duration="{q(b-a)}" data-track-index="{70+i}" style="position:absolute;inset:0;width:1080px;height:1920px;z-index:100;{c.get("subject_style", "")}"></video>')
+        if kind == "editorial":
+            for j, word in enumerate(c["layout"]):
+                pieces.append(f'<div id="{cid}w{j}" style="position:absolute;left:{word["x"]}px;top:{word["y"]}px;{font("head", word["size"])};color:{MAIN};letter-spacing:-.055em;line-height:.9;white-space:nowrap;text-shadow:0 5px 8px #0005,0 12px 26px #0006;z-index:{word.get("z", 0)}">{esc(word["text"])}</div>')
+                js.append(f'tl.fromTo("#{cid}w{j}",{{y:22,opacity:0}},{{y:0,opacity:1,duration:.22,ease:"power3.out"}},{q(a+j*.10)});')
+        elif kind == "guide_scroll":
+            pages = c["images"]
+            page_height, gap, viewport_height = 1273, 28, 1740
+            pieces.append(f'<div style="position:absolute;left:90px;top:70px;width:900px;height:{viewport_height}px;overflow:hidden;border-radius:18px;background:#FFEEF5;box-shadow:0 18px 50px #0004"><div id="{cid}pages" style="position:absolute;inset:0 auto auto 0;width:900px">'+"".join(f'<img src="{img(source)}" style="display:block;width:900px;height:{page_height}px;object-fit:contain;margin-bottom:{gap}px"/>' for source in pages)+'</div></div>')
+            distance = len(pages)*(page_height+gap)-gap-viewport_height
+            js.append(f'tl.fromTo("#{cid}pages",{{y:0}},{{y:-{distance},duration:{b-a-.65},ease:"none"}},{q(a+.45)});')
+        else:
+            images = c["images"]
+            for j, source in enumerate(images):
+                pieces.append(f'<img id="{cid}im{j}" src="{img(source)}" style="position:absolute;left:0;top:0;width:300px;height:534px;object-fit:cover;border-radius:14px;box-shadow:0 12px 25px #0003;transform-origin:50% 50%"/>')
+                steps = 40
+                for n in range(steps+1):
+                    progress = n / steps
+                    angle = 2*math.pi*j/len(images) + progress*1.45 - .42
+                    depth = math.cos(angle)
+                    scale = .80 + .24*(depth+1)/2
+                    props = {"x":540+485*math.sin(angle)-150,"y":1020+95*depth-267,"scale":scale,"rotationY":-math.sin(angle)*22,"zIndex":int(200+depth*50) if depth>=0 else int(40+depth*30)}
+                    if n == 0: js.append(f'tl.set("#{cid}im{j}",{json.dumps(props)},{q(a)});')
+                    else: js.append(f'tl.to("#{cid}im{j}",{json.dumps({**props,"duration":(b-a)/steps,"ease":"none"})},{q(a+(n-1)*(b-a)/steps)});')
+        back.append(f'<div id="{cid}" style="position:absolute;inset:0">'+"".join(pieces)+'</div>')
+        show(f"#{cid}",a,b,.10)
+        sfx("swish" if kind in ("orbit_carousel", "guide_scroll") else "snap",a,-12)
+    elif kind == "title":
         lines = [case(x.strip()) for x in c["text"].split("/")]
         if c.get("quiet", True): quiet.append((a, b))                    # the hook says it: captions step aside ("quiet": false keeps them)
         sizes = [c.get("size") or fit(x, 230, 230 // 16) for x in lines]   # each line fitted on its own, outline included; "size" overrides (tight-tracked fonts fit bigger)
@@ -195,7 +244,7 @@ for i, c in enumerate(edit.get("cards", [])):
         js.append(f'tl.fromTo("#{cid} .tag",{{scale:0.4,y:30,opacity:0}},{{scale:1,y:0,opacity:1,duration:0.42,ease:"back.out(3)"}},{q(a)});')
         sfx("pop", a, -14)
     elif kind == "cta":
-        quiet.append((a, b))
+        if c.get("quiet", True): quiet.append((a, b))
         words = c["text"].split()
         inner = " ".join(f'<span style="color:{POP}">{esc(w)}</span>' if w.isupper() and len(w) > 1 else esc(case(w)) for w in words)
         front.append(f'<div id="{cid}" class="ctaw" style="top:{c.get("y", 1360)}px"><span class="cta" style="{font("head", 78)};color:{MAIN};background:{LIGHT}">{inner}</span></div>')
@@ -285,7 +334,7 @@ for i, c in enumerate(edit.get("cards", [])):
 CARD_MUTE = False
 # ---- brand rule: every edit has a carousel (unless the person said no for this reel) --------------------------------
 if brand.get("require_carousel") and not edit.get("no_carousel_ok") and not any(
-        k["type"] == "motion" and "carousel" in k.get("name", "") for k in edit.get("cards", [])):
+        (k["type"] == "orbit_carousel" or (k["type"] == "motion" and "carousel" in k.get("name", ""))) for k in edit.get("cards", [])):
     sys.exit("brand rule: add a carousel motion card (or ask them; if they say no, set \"no_carousel_ok\": true in edit.json)")
 
 # ---- captions -----------------------------------------------------------------------------------------------------
@@ -300,16 +349,18 @@ for i, c in enumerate(edit.get("captions", [])):
     if plain:
         front.append(f'<div id="c{i}" class="cap" style="top:{CAP_Y}px;font-family:-apple-system,Helvetica,Arial,sans-serif;font-weight:500;font-size:46px;letter-spacing:0;color:#fff">{esc(" ".join(w["text"] for w in ws))}</div>')
         show(f"#c{i}", c["start"], c["end"], 0.04); continue
+    fixed = edit.get("captionStyle", {}).get("fixedPosition", False)
     chars = sum(len(w["text"]) + 1 for w in ws)
-    px = fit(" ".join(w["text"] for w in ws), CAP_PX * (1.35 if len(ws) == 1 else 1))
+    px = fit(" ".join(w["text"] for w in ws), c.get("size", CAP_PX * (1.35 if len(ws) == 1 else 1)))
     big = 1.7 if CAPS.get("style") == "editorial" else 1.12          # editorial = dramatic size contrast on the emphasis word
     big = min(big, min((fit(w["text"], px * big) / px) for w in ws if w.get("accent")) if any(w.get("accent") for w in ws) else big)
+    if fixed: px, big = CAP_PX, 1.0
     blk = "display:block;line-height:.95;" if CAPS.get("style") == "editorial" and len(ws) > 1 else ""
     spans = "".join(f'<span class="acc" style="{blk}{font("accent", int(px * big))};color:{CAP_ACC}">{esc(case(w["text"]))}</span> ' if w.get("accent")
                     else f'<span>{esc(case(w["text"]))}</span> ' for w in ws)
-    front.append(f'<div id="c{i}" class="cap" style="top:{CAP_Y}px;{font("body", int(px))};color:{CAP};letter-spacing:{CAPS.get("tracking", -0.02)}em">{spans.strip()}</div>')
+    front.append(f'<div id="c{i}" class="cap" style="top:{c.get("y", CAP_Y)}px;left:{c.get("x", 60)}px;right:auto;width:{c.get("width", 960)}px;{font("body", int(px))};color:{CAP};letter-spacing:{CAPS.get("tracking", -0.02)}em">{spans.strip()}</div>')
     show(f"#c{i}", c["start"], c["end"], 0.06)
-    js.append(f'tl.fromTo("#c{i}",{{scale:0.86,y:14}},{{scale:1,y:0,duration:0.16,ease:"back.out(2)"}},{q(c["start"])});')
+    if not fixed: js.append(f'tl.fromTo("#c{i}",{{scale:0.86,y:14}},{{scale:1,y:0,duration:0.16,ease:"back.out(2)"}},{q(c["start"])});')
 
 # ---- assemble -----------------------------------------------------------------------------------------------------
 doc = f"""<!doctype html>
@@ -352,8 +403,8 @@ html, body {{ margin: 0; background: #000; overflow: hidden; }}
 .pf video {{ width: 100%; height: 100%; object-fit: cover; display: block; }}
 .glass {{ background: rgba(28,22,34,.34) !important; backdrop-filter: blur(22px) saturate(1.4); -webkit-backdrop-filter: blur(22px) saturate(1.4); border: 1.5px solid rgba(255,255,255,.55); box-shadow: 0 20px 60px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.6); }}
 .card.glass .cr {{ color: #fff !important; border-bottom-color: rgba(255,255,255,.25); }}
-.cap {{ position: absolute; left: 60px; right: 60px; text-align: center; line-height: 1.02; letter-spacing: -.02em; text-shadow: 0 2px 14px rgba(0,0,0,.3); }}
-.cap .acc {{ text-shadow: 0 0 2px rgba(0,0,0,.25), 0 3px 22px rgba(0,0,0,.5); }}   /* accent colour stays readable over white screens, no outline */
+.cap {{ position: absolute; left: 60px; right: 60px; text-align: center; line-height: 1.02; letter-spacing: -.02em; height:130px;display:flex;align-items:center;justify-content:center;gap:.2em;text-shadow:0 4px 7px rgba(0,0,0,.55),0 9px 22px rgba(0,0,0,.45); }}
+.cap .acc {{ text-shadow:0 4px 7px rgba(0,0,0,.55),0 9px 22px rgba(0,0,0,.45); }}   /* accent colour stays readable over white screens, no outline */
 </style></head>
 <body>
 <div id="stage" data-composition-id="main" data-start="0" data-duration="{DUR}" data-fps="{FPS}" data-width="{W}" data-height="{H}">

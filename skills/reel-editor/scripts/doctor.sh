@@ -12,7 +12,7 @@ command -v node >/dev/null && ok "Node.js $(node -v)" || no "Node.js" "install t
 command -v python3 >/dev/null && ok "Python 3" || no "Python 3" "macOS: xcode-select --install"
 [ "$(uname)" = "Darwin" ] || warn "not macOS" "macOS is the tested platform; Windows and Linux are untested"
 
-HF=0; for d in ~/.claude/skills/hyperframes ~/.agents/skills/hyperframes; do [ -d "$d" ] && HF=1; done   # either location is fine
+HF=0; for d in "${CODEX_HOME:-$HOME/.codex}/skills/hyperframes" "$HOME/.agents/skills/hyperframes"; do [ -d "$d" ] && HF=1; done   # either location is fine
 [ "$HF" = 1 ] && ok "HyperFrames skills" || no "HyperFrames skills" "npx skills add heygen-com/hyperframes"
 
 ENG="$(cd "$(dirname "$0")/.." && pwd)/engine"
@@ -39,13 +39,12 @@ PY
   if python3 -c "import json,sys;sys.exit(0 if json.load(open(sys.argv[1])).get('capcut') else 1)" "$HOME_DIR/brand.json"; then
     [ -d "${CAPCUT_SKILLS_DIR:-/nonexistent}/capcut-stdraft-builder" ] && ok "CapCut helper scripts" \
       || warn "CapCut helper scripts not found" "the MP4 still works; for CapCut see references/capcut.md step 3"
-    claude mcp list 2>/dev/null | grep -q capcut_creation && ok "CapCut connector added" \
-      || warn "CapCut connector not added" "the MP4 still works; for CapCut see references/capcut.md step 2"
+    warn "CapCut account tools checked in session" "Codex checks the installed CapCut plugin when an editable draft is requested"
   fi
 else
   echo "  ➖ no brand file yet - the setup interview will make one"
 fi
-echo "  ℹ️  the review page needs Claude Code's Artifact tools; Claude checks this when you start an edit (chat review otherwise)"
+echo "  ℹ️  the review page runs locally with Python; no artifact account is needed"
 
 FREE_GB=$(df -Pk "$HOME" | awk 'NR==2{print int($4/1048576)}')
 [ "$FREE_GB" -ge 10 ] && ok "${FREE_GB} GB free disk" || no "only ${FREE_GB} GB free disk" "free up 10+ GB (35+ GB for 4K exports)"

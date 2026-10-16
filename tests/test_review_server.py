@@ -9,6 +9,18 @@ with tempfile.TemporaryDirectory() as d:
     def get(path,headers={}): return urllib.request.urlopen(urllib.request.Request(url+path,headers=headers))
     assert json.load(get('/api/reel/current'))['title']=='test'
     assert b'localDB' in get('/').read()
+    assert b'Thumbnail studio' in get('/').read()
+    assert b'Download portrait PNG' in get('/thumbnail').read()
+    assert json.load(get('/api/thumbnail'))['sources'] == []
+    cover = dict(source='raw.mp4', time=1.2, title='my ai reel editor', style='shadow', color='#ed84b0', position=280, size=108, font='system-ui', guides=True)
+    req=urllib.request.Request(url+'/api/thumbnail',data=json.dumps(cover).encode(),method='PUT',headers={'Origin':url,'Content-Type':'application/json'})
+    assert json.load(urllib.request.urlopen(req))['saved']
+    assert json.load(get('/api/thumbnail'))['settings']==cover
+    for override in ({'time':float('nan')},{'source':'../../secret'},{'title':'x'*161},{'size':999}):
+        req=urllib.request.Request(url+'/api/thumbnail',data=json.dumps({**cover,**override}).encode(),method='PUT',headers={'Origin':url})
+        try: urllib.request.urlopen(req);raise AssertionError('invalid cover accepted')
+        except urllib.error.HTTPError as e: assert e.code==400
+    assert json.load(get('/api/thumbnail'))['settings']==cover
     assert get('/media/clip.mp4',{'Range':'bytes=2-5'}).read()==b'2345'
     assert get('/media/clip.mp4',{'Range':'bytes=-3'}).read()==b'789'
     data={'cut':[1],'buildRequest':{'hash':'a'},'revisions':[{'t':1,'text':'fix'}]}

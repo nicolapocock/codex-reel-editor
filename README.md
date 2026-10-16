@@ -53,3 +53,6 @@ See [the complete beginner guide](GUIDE.md) and [sound configuration](docs/SOUND
 - [Download the six-page Codex guide](docs/getgitgirl-codex-edit-guide.pdf)
 - [Editable Figma guide](https://www.figma.com/design/iTjBqHg2h05yT6j0SBcwWb/?node-id=221-2)
 - [Copyable setup page](skills/reel-editor/review/setup.html) — open locally; GitHub shows its source.
+
+### Thumbnail studio (local beta)
+Open `/thumbnail` on the running review server, or click **Thumbnail studio** in the review header. Select local footage, sample six frames, choose a frame, and edit the headline, font, colour, position and shadow/panel style. Download a 1080×1920 PNG or centred 3:4/square crop. Crop guides are preview-only. Fonts come from the reel's prepared `proj/fonts` assets; otherwise system sans is used. Frame suggestions are evenly spaced, not AI-ranked. Use **Save cover settings** to persist the selected frame and styling with the reel. Reopening the studio restores them.

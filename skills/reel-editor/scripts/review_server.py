@@ -24,6 +24,17 @@ def make_handler(reel, enable_builds=False):
     class Handler(SimpleHTTPRequestHandler):
         def do_GET(self):
             path = unquote(urlsplit(self.path).path)
+            if path == '/api/thumbnail':
+                brand_path = reel / 'brand.json'
+                brand = json.loads(brand_path.read_text()) if brand_path.exists() else {}
+                sources = [name for name in ('master-before-bg.mp4', 'master.mp4', 'raw1080.mp4', 'raw.mp4', 'final.mp4') if (reel / name).is_file()]
+                fonts = []
+                for font in brand.get('fonts', {}).values():
+                    name = Path(font.get('file', '')).name
+                    local = reel / 'proj' / 'fonts' / name
+                    if local.is_file() and local.resolve().is_relative_to(reel):
+                        fonts.append({'family': font.get('family', name), 'url': '/media/proj/fonts/' + name, 'weight': font.get('weight', 400)})
+                self.send_json({'sources': sources, 'fonts': fonts, 'color': brand.get('colors', {}).get('main', '#ED84B0'), 'name': reel.name, 'settings': json.loads((reel / 'thumbnail_settings.json').read_text()) if (reel / 'thumbnail_settings.json').exists() else {}}); return
             if path == '/api/status':
                 self.send_json({**(builder.status if builder else {'state':'disabled','message':'Builds are disabled'}), 'enabled': bool(builder)}); return
             if path.startswith('/api/'):
@@ -37,6 +48,8 @@ def make_handler(reel, enable_builds=False):
                 file = UI / 'reel-review.html'
             elif path == '/setup':
                 file = UI / 'setup.html'
+            elif path == '/thumbnail':
+                file = UI / 'thumbnail.html'
             elif path == '/core.js':
                 file = UI / 'core.js'
             elif path.startswith('/media/'):
@@ -114,19 +127,36 @@ def make_handler(reel, enable_builds=False):
                 self.send_error(403); return
             if self.headers.get('Sec-Fetch-Site') == 'cross-site':
                 self.send_error(403); return
-            if self.path != '/api/review/current':
+            if self.headers.get('Host') != expected[7:]:
+                self.send_error(403); return
+            if self.path not in ('/api/review/current', '/api/thumbnail'):
                 self.send_error(403); return
             try:
                 length = int(self.headers.get('Content-Length', '0'))
                 if length <= 0 or length > 2_000_000: raise ValueError('Invalid size')
                 data = json.loads(self.rfile.read(length))
-                self.validate_decisions(data)
+                if self.path == '/api/thumbnail':
+                    if not isinstance(data, dict): raise ValueError('Expected settings')
+                    allowed = {'source','time','title','style','color','position','size','font','guides'}
+                    if set(data) - allowed: raise ValueError('Unknown setting')
+                    for key in ('source','title','style','color','font'):
+                        if not isinstance(data.get(key), str): raise ValueError('Invalid text setting')
+                    if len(data['title']) > 160: raise ValueError('Title too long')
+                    if data['source'] not in ('master-before-bg.mp4','master.mp4','raw1080.mp4','raw.mp4','final.mp4'): raise ValueError('Invalid source')
+                    if data['style'] not in ('shadow','panel','dark'): raise ValueError('Invalid style')
+                    if not re.fullmatch(r'#[0-9a-fA-F]{6}', data['color']): raise ValueError('Invalid colour')
+                    for key, lo, hi in [('time',0,86400),('position',120,1500),('size',48,150)]:
+                        if type(data.get(key)) not in (int,float) or not lo <= data[key] <= hi: raise ValueError('Invalid range')
+                    if type(data.get('guides')) is not bool: raise ValueError('Invalid guides')
+                else:
+                    self.validate_decisions(data)
             except (ValueError, json.JSONDecodeError):
                 self.send_error(400); return
             with write_lock:
-                tmp = reel / 'review_decisions.json.tmp'
+                destination = reel / ('thumbnail_settings.json' if self.path == '/api/thumbnail' else DOCS['review/current'])
+                tmp = destination.with_suffix('.json.tmp')
                 tmp.write_text(json.dumps(data, indent=2))
-                os.replace(tmp, reel / DOCS['review/current'])
+                os.replace(tmp, destination)
             self.send_json({'saved': True})
 
         def send_json(self, value, status=200):

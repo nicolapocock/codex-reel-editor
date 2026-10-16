@@ -69,3 +69,6 @@ If the brand file and your taste disagree, the brand file wins. If they correct 
 - Use actual supplied screenshots for the torso carousel. `orbit_carousel` and `guide_scroll` need a timed alpha source matching the master segment; no source-video uploads.
 - Open the localhost review URL after starting review_server.py with --enable-builds. Do not promise that a dashboard appears automatically without starting its server.
 - Setup commands must be available through the local setup page's copy buttons. PDF text selection alone is not the install path.
+
+## Reel covers
+After the edit, offer the local `/thumbnail` page from the review server. It samples six frames and supports precise frame selection, brand fonts, headline styling and PNG exports at 1080×1920, 1080×1440 and 1080×1080. Inspect the selected expression and crop before delivery. Frame options are evenly spaced, not automatically ranked for quality. Use **Save cover settings** to store the frame and style in `thumbnail_settings.json`. No generated imagery or external upload is required.

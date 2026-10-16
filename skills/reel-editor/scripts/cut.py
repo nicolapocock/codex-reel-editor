@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Apply the approved rough cut: keep spans from edl.json (in play order), speed up, optional colour grade, scale to the
 brand resolution. Writes master.mp4 in the reel folder.
-Usage: python3 cut.py <reel-folder>      (reads <reel-folder>/edl.json and ~/reels/brand.json)"""
+Usage: python3 cut.py <reel-folder>      (reads <reel-folder>/edl.json and $REELS_HOME/brand.json)"""
 import json, os, subprocess, sys
 from pathlib import Path
 

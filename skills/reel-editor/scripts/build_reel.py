@@ -27,7 +27,7 @@ edit.json (written by auto_edit.py, then Claude marks accents and adds cards):
      follow {words: [{text, accent}], framing: "wide"}   caption-camera-follow in brand colours/font: one sentence
                                                      written word by word across a camera that pulls back (hook moments)
   Any card: "glass": true gives the frosted liquid-glass look (card, tag).
-  Image paths: relative to the reel folder, or to ~/reels/assets/, or absolute.
+  Image paths: relative to the reel folder, or to $REELS_HOME/assets/, or absolute.
 """
 import html, json, math, os, re, shutil, subprocess, sys
 from pathlib import Path
@@ -80,7 +80,7 @@ def mount(src):
     (proj / rel).write_text(re.sub(r"<audio[^>]*>(</audio>)?", "", src.read_text()))
     return rel
 def img(src):
-    """Copy an image into the project and return its path there. Looks in the reel folder, ~/reels/assets/, then as given."""
+    """Copy an image into the project and return its path there. Looks in the reel folder, $REELS_HOME/assets/, then as given."""
     for cand in (reel / src, HOME / "assets" / src, Path(src).expanduser()):
         if cand.exists():
             dst = proj / "img" / f"{len(list((proj / 'img').iterdir()))}_{cand.stem}.png"

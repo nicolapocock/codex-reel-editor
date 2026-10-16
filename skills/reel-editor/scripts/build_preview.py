@@ -74,7 +74,7 @@ class PreviewBuilder:
             shutil.copy2(job/'final.mp4',out)
             dur=float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',str(out)],text=True))
             publish_cover_assets(reel, job)
-            atomic_json(reel/'review_build.json',{'url':'/media/review-assets/'+out.name,'hash':edit['hash'],
+            atomic_json(reel/'review_build.json',{'url':'/media/review-assets/'+out.name,'hash':edit['hash'],'reelVersion':edit.get('reelVersion'),
                 'at':datetime.now(timezone.utc).isoformat(),'cutDur':dur,'id':build_id})
             # Keep the matching decisions/edit available without changing the live review.
             atomic_json(reel/'last_built_decisions.json',decisions)

@@ -11,7 +11,7 @@ Turns a raw talking-head clip into a finished, on-brand vertical reel. Every bra
 
 The workspace is `REELS_HOME` when set, otherwise `~/reels/`. In a restricted workspace set `REELS_HOME` to a writable project folder and pass it consistently to every script. Resolve script paths relative to this skill, not the shell working directory.
 
-- **No `~/reels/brand.md`** → run the setup interview in `references/setup-interview.md` first. Do not edit a clip without a brand file, even if they say "just use whatever". The interview takes 5 minutes and it is the whole point of this skill.
+- **No `$REELS_HOME/brand.md`** → run the setup interview in `references/setup-interview.md` first. Do not edit a clip without a brand file, even if they say "just use whatever". The interview takes 5 minutes and it is the whole point of this skill.
 - **Brand file exists** → read `brand.md` and `brand.json` in full, then continue.
 
 ## Check the tools (once per machine)
@@ -20,7 +20,7 @@ The workspace is `REELS_HOME` when set, otherwise `~/reels/`. In a restricted wo
 
 ## The edit, in order
 
-Each reel gets its own folder: `~/reels/<yyyy-mm-dd>-<short-name>/`. Copy the raw clip in (never edit the original).
+Each reel gets its own folder: `$REELS_HOME/<yyyy-mm-dd>-<short-name>/`. Copy the raw clip in (never edit the original).
 
 1. **Transcribe** - `python3 scripts/transcribe.py <clip> transcript.json`. Uses ElevenLabs Scribe when `ELEVENLABS_API_KEY` is in `~/.config/reels/.env` (tight word timing; captions land on the word), else local Whisper (free, timing can drift ~0.3 s).
 2. **Clean the voice** - `bash scripts/clean_audio.sh <clip> voice.wav` (add `--denoise` if there is background noise). Targets -14 LUFS, the level Instagram and TikTok expect.

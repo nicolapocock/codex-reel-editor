@@ -7,7 +7,7 @@ The cut timeline is computed by review/core.js (run with node), the same file th
 proposal.json (Claude writes this per reel):
   {"title", "proposedCut": [[srcStart, srcEnd], ...] (kept lines), "accentWords": ["claude", ...],
    "cards": [{"id","type","kind","what","anchor":"word","after":srcSec,"end_anchor"?,"place":[x,y,w,h], "sfx":{"name","db"}, ...build_reel fields}]}"""
-import json, os, re, shutil, subprocess, sys
+import hashlib, json, os, re, shutil, subprocess, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pacing import pacing
@@ -99,7 +99,7 @@ def export(reel, proposal, out):
             e = [i for i, w in enumerate(words) if norm(w["text"]) == norm(c["end_anchor"]) and i >= hits[0]]
             if e: g["w1"] = e[0]
         board.append(g)
-    reel_json = {"title": proposal["title"], "srcDur": float(subprocess.run(["ffprobe", "-v", "error", "-show_entries",
+    reel_json = {"title": proposal["title"], "brandName": brand.get("name"), "srcDur": float(subprocess.run(["ffprobe", "-v", "error", "-show_entries",
                  "format=duration", "-of", "csv=p=0", str(raw_clip(reel))], capture_output=True, text=True).stdout),
                  "speed": pacing(brand)["speed"], "pacing": pacing(brand), "words": words, "proposedCut": proposed_cut, "keepPauses": keep_pauses,
                  "captions": caps, "board": board,
@@ -108,6 +108,8 @@ def export(reel, proposal, out):
                            "cap": brand["colors"].get("caption", "#FFFFFF"), "acc": brand["colors"].get("caption_accent", "#FF7DB8"),
                            "main": brand["colors"]["main"], "case": brand["captions"].get("case", "lower")},
                  "grade": brand.get("grade")}
+    # fingerprint of the footage data, so the page can tell a preview built from older data is stale
+    reel_json["version"] = hashlib.sha1(json.dumps([words, board, reel_json["srcDur"]], sort_keys=True).encode()).hexdigest()[:10]
     P = node(reel_json, {"cut": proposed_cut})
     print(f"{len(words)} words ({sum(1 for w in words if w.get('filler'))} fillers), {len(caps)} captions, {len(board)} graphics, "
           f"proposed cut {P['cutDur']:.1f}s, {len(P['pauses'])} pauses ({len(keep_pauses)} kept on purpose)")
@@ -140,7 +142,9 @@ def do_import(reel, review):
     punch, last = [], -9.0   # punch-ins on sentence starts in the cut, at most every ~6 s (emphasis, not every line)
     for c in caps:
         if c["start"] - last > 6: punch.append(c["start"]); last = c["start"]
-    json.dump({"captions": caps, "punch": punch, "cards": cards, "hash": P["hash"], "captionStyle": d.get("captionStyle", {})}, open(reel / "edit.json", "w"), indent=1)
+    json.dump({"captions": caps, "punch": punch, "cards": cards, "hash": P["hash"], "reelVersion": reel_json.get("version"), "captionStyle": d.get("captionStyle", {})}, open(reel / "edit.json", "w"), indent=1)
+    # the approved script, so qa.py checks the render for clipped words without anyone writing it by hand
+    (reel / "expected.txt").write_text(" ".join(w["text"] for c in caps for w in c["words"]) + "\n")
     print(f"cut {P['cutDur']:.1f}s from {len(P['spans'])} spans; {len(caps)} captions; {len(cards)} graphics; hash {P['hash']}")
     for c in changes: print("CHANGE REQUESTED:", c)
     for k, n in (d.get("notes") or {}).items():

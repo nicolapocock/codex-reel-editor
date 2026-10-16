@@ -20,8 +20,9 @@ you'll copy and paste a few commands along the way. you don't need to understand
 
 ## step 1: get codex
 
-1. go to the [codex app page](https://developers.openai.com/codex/app), download the codex app for mac, open it and sign in with your chatgpt account.
-2. leave codex open, you'll come back to it in step 7.
+1. codex now lives inside the chatgpt desktop app. go to the [chatgpt desktop app page](https://learn.chatgpt.com/docs/app), click **download for macos**, open the app and sign in with your chatgpt account.
+2. in the app, switch to **codex** (not chatgpt).
+3. leave it open, you'll come back to it in step 7.
 
 ## step 2: download the reel editor
 
@@ -94,7 +95,7 @@ you can close terminal now. you won't need it again for normal editing.
 
 ## step 7: set up the reel editor (back in codex)
 
-1. in codex, start a new project and pick the `codex-reel-editor-main` folder from step 2. codex can only see the files in the folder you pick, so make sure it's that one.
+1. in codex, open a folder and pick the `codex-reel-editor-main` folder from step 2. codex can only see the files in the folder you pick, so make sure it's that one.
 2. paste this into the message box and press **return**:
 
 ```
@@ -146,7 +147,7 @@ once your reel is done, click **thumbnail studio** at the top of the review page
 2. click **show six frame options**. these are frames sampled evenly through the reel. tap one, or drag the slider to land on the exact frame you want. you pick the expression, it doesn't guess for you.
 3. type your headline. press **return** where you want a new line.
 4. change the font, size, colour and height, and pick a style: soft shadow, cream title panel or dark fade.
-5. switch on the **3:4** and **square** guides to check your face and words fit when instagram crops it. the guides never show in your downloads.
+5. leave **show centre crop guides** ticked to check your face and words fit the 3:4 and square crops instagram uses. the guides never show in your downloads.
 6. click **save cover settings** so it's all still there next time, then download the size you need: **download portrait PNG** (1080 × 1920, the reel cover), **3:4 crop** (1080 × 1440, your grid) or **square crop** (1080 × 1080).
 
 ## want the capcut version too? (optional)
@@ -180,7 +181,7 @@ read [how it works](BUILD-IT-YOURSELF.md).
 | `command not found: ffmpeg` or `node` | run `brew install ffmpeg node python` again |
 | terminal seems frozen after the password | it's working, the letters are hidden on purpose. type your password and press return |
 | the check says something is ❌ | paste the whole message into codex and say "fix this" |
-| codex can't find the reel editor files | you opened the wrong folder. start a new project and pick `codex-reel-editor-main` |
+| codex can't find the reel editor files | you opened the wrong folder. in codex, open a folder and pick `codex-reel-editor-main` |
 | the review page won't load | type **reopen the review page for my last reel** in codex |
 | the rough cut won't play | press play rough cut once more (browsers sometimes block the first play). if it still won't, reload the page |
 | build preview failed | your last good preview stays on the page. tell codex "the preview build failed" and it reads the error log |

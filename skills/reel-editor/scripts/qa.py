@@ -33,15 +33,26 @@ if not -15 <= lufs <= -12.5: fails.append("loudness")
 exp = reel / "expected.txt"
 if exp.exists():
     tok = lambda s: re.sub(r"[^a-z0-9' ]", " ", re.sub(r"(?<=\d),(?=\d)", "", s.lower())).split()   # "5,000" == "5000"
-    subprocess.run(["npx", "-y", "hyperframes", "transcribe", str(video), "-d", str(reel / "qa_transcript"),
-                    "--json", "--model", "small.en"], capture_output=True)
+    r = subprocess.run(["npx", "-y", "hyperframes", "transcribe", str(video), "-d", str(reel / "qa_transcript"),
+                        "--json", "--model", "small.en"], capture_output=True, text=True)
+    if r.returncode: sys.exit(f"QA could not transcribe the video:\n{r.stderr.strip()[-1500:]}")
     heard = [t for wd in json.load(open(reel / "qa_transcript/transcript.json")) for t in tok(wd["text"])]
     expected = tok(exp.read_text())
-    ratio = difflib.SequenceMatcher(None, expected, heard, autojunk=False).ratio()
-    missing = [expected[i1:i2] for op, i1, i2, _, _ in
-               difflib.SequenceMatcher(None, expected, heard, autojunk=False).get_opcodes() if op in ("delete", "replace")]
+    # brand.json "vocab": names the transcriber misspells ("Claude" -> "Clord"). A same-length swap of only vocab words
+    # counts as heard; a clipped word still shows up as a deletion.
+    vocab = {t for v in brand.get("vocab", []) for t in tok(v)}
+    in_vocab = lambda t: t in vocab or re.sub(r"'s$", "", t) in vocab
+    ops = difflib.SequenceMatcher(None, expected, heard, autojunk=False).get_opcodes()
+    ok = lambda op, i1, i2, j1, j2: op == "replace" and i2 - i1 == j2 - j1 and all(in_vocab(t) for t in expected[i1:i2])
+    same = sum(i2 - i1 for op, i1, i2, j1, j2 in ops if op == "equal" or ok(op, i1, i2, j1, j2))
+    ratio = 2 * same / max(1, len(expected) + len(heard))
+    missing = [expected[i1:i2] for op, i1, i2, j1, j2 in ops if op in ("delete", "replace") and not ok(op, i1, i2, j1, j2)]
     print(f"words     {ratio:.0%} match" + (f"; check: {missing[:6]}" if missing else ""))
-    if ratio < 0.95: fails.append("words")
+    # one clipped word barely moves the ratio, and the first and last words are where cuts clip most
+    lost = {i for op, i1, i2, j1, j2 in ops if op in ("delete", "replace") and not ok(op, i1, i2, j1, j2) for i in range(i1, i2)}
+    edge = sorted(lost & {0, len(expected) - 1})
+    if edge: print(f"          first/last word missing: {[expected[i] for i in edge]} (clipped at the start or end?)")
+    if ratio < 0.95 or edge: fails.append("words")
 else:
     print("words     skipped (write the approved script to expected.txt to check for clipped words)")
 

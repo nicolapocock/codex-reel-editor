@@ -27,4 +27,8 @@ with tempfile.TemporaryDirectory() as folder:
     assert words[0]['s'] >= 1.1, words          # moved onto the real speech
     assert keep[0][0] >= 1.0 and keep[0][0] <= 1.3, keep   # leading silence trimmed, opening word kept
     assert all(b - a > 0.3 for a, b in keep) and keep[-1][1] >= 2.6, keep
+    # the page marks a preview stale when the footage data changes, via this fingerprint
+    version = json.loads((reel / 'review_reel.json').read_text())['version']
+    assert version and json.loads((reel / 'edit.json').read_text())['reelVersion'] == version
+    assert (reel / 'expected.txt').read_text().split() == ['Over', 'five', 'people'], 'import writes the approved script for QA'
 print('PASS: opening words survive a silent start')

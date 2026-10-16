@@ -20,7 +20,7 @@ The review page runs on localhost and saves decisions into the reel folder. Foot
 1. Read `<reel>/review_decisions.json`. If absent, ask whether to use the proposal; absence is not approval. Wait for their approval before cutting.
 2. `python3 scripts/review_sync.py import <reel> <reel>/review_decisions.json`. Handle every printed change request, note and revision before rendering. Confirm requested persistent brand changes before updating the brand.
 3. `REEL_PREVIEW=1 python3 scripts/cut.py <reel>` then `REEL_PREVIEW=1 bash scripts/render.sh <reel>`. Check frames at graphics and long captions.
-4. Make `review-assets/preview.mp4`, a 540p proxy of `final.mp4`. Write `<reel>/review_build.json` with `url: "/media/review-assets/preview.mp4"`, `hash` from `edit.json`, `at` (ISO timestamp) and `cutDur` (preview duration). The open page polls for this file and marks it stale when decisions change.
+4. Make `review-assets/preview.mp4`, a 540p proxy of `final.mp4`. Write `<reel>/review_build.json` with `url: "/media/review-assets/preview.mp4"`, `hash` and `reelVersion` from `edit.json`, `at` (ISO timestamp) and `cutDur` (preview duration). The open page polls for this file and marks it stale when decisions change.
 5. Read timestamped revisions from the decisions file before making the next preview. Keep the review server session alive while reviewing, and stop it when finished.
 
 ## Final

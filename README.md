@@ -2,14 +2,14 @@
 
 Turn a raw talking-head video into a branded vertical reel with Codex. It cuts the ums and pauses, adds captions and graphics in your brand, lets you review every cut on a local page, then renders an MP4 ready to post. It can also make your reel cover.
 
-This is the Codex version of [Nicola Pocock's Claude reel editor](https://github.com/nicolapocock/claude-reel-editor). Everything runs on your Mac in the Codex app. Your footage stays on your computer.
+This is the Codex version of [Nicola Pocock's Claude reel editor](https://github.com/nicolapocock/claude-reel-editor). Everything runs on your Mac in Codex, inside the ChatGPT desktop app. Your footage stays on your computer.
 
 **New to this? Start with the [setup guide](GUIDE.md).** It walks you through every step, no coding needed. There's also a [six-page PDF version](docs/getgitgirl-codex-edit-guide.pdf).
 
 ## What you need
 
 - A Mac (other systems untested)
-- The [Codex app](https://developers.openai.com/codex/app) and a ChatGPT plan that includes Codex (Plus or higher)
+- The [ChatGPT desktop app](https://learn.chatgpt.com/docs/app) (switch to Codex inside it) and a ChatGPT plan that includes Codex (Plus or higher)
 - Python 3, Node.js and ffmpeg (the guide installs them)
 - About 10 GB of free space
 

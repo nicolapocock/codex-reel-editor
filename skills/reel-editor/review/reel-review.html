@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>getgitgirl · reel studio</title>
+<title>Reel studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700;800&family=Caveat:wght@700&family=JetBrains+Mono:wght@500&display=swap">
 <style>
@@ -127,7 +127,7 @@ summary{cursor:pointer;font-weight:700}
 </style>
 
 </head><body>
-<header class="studio-header"><a class="wordmark" href="/">getgitgirl<span> / reel studio</span></a><div><span class="version">LOCAL TEST BUILD</span><a href="/thumbnail" target="_blank">Thumbnail studio ↗</a> · <a href="/setup" target="_blank">Setup &amp; help ↗</a></div></header>
+<header class="studio-header"><a class="wordmark" href="/"><b id="brandname">reel studio</b><span id="brandsub" hidden> / reel studio</span></a><div><a href="/thumbnail" target="_blank">Thumbnail studio ↗</a> · <a href="/setup" target="_blank">Setup &amp; help ↗</a></div></header>
 <div class="welcome"><span class="eyebrow">YOUR FOOTAGE. YOUR FINAL SAY.</span><h1>Make it yours.</h1><p>Review the cut, fine-tune your captions, then build a preview. Everything saves on this computer.</p></div>
 <div class="wrap">
   <aside class="side">
@@ -563,12 +563,12 @@ function renderSound() {
 function renderPreview() {
   const h = ReelCore.hash(decisions()), st = $("#bstate");
   st.className = "state";
-  if (B?.url && B.hash === h) { st.textContent = `Preview is up to date (built ${new Date(B.at).toLocaleString()}). Press play on the video.`; st.classList.add("ok"); }
-  else if (B?.url) { st.textContent = "Preview is outdated: you've changed decisions since it was built. Build again to see them."; st.classList.add("out"); }
+  if (B?.url && B.hash === h && (B.reelVersion ?? null) === (R.version ?? null)) { st.textContent = `Preview is up to date (built ${new Date(B.at).toLocaleString()}). Press play on the video.`; st.classList.add("ok"); }
+  else if (B?.url) { st.textContent = "Preview is outdated: your decisions or the footage data changed since it was built. Build again to see them."; st.classList.add("out"); }
   else if (S.buildRequest?.hash === h) st.textContent = "Build requested. Tell Codex \"build preview\" in chat; the page can't start a render on its own.";
   else st.textContent = "No preview built yet. Build one when your decisions look right.";
   const download=$("#download");download.hidden=!B?.url;
-  if(B?.url){download.href=B.url;download.download='getgitgirl-preview.mp4';}
+  if(B?.url){download.href=B.url;download.download=`${R.title||'reel'}-preview.mp4`.replace(/[^\w .-]+/g,'');}
   const revs = $("#revs"); revs.textContent = "";
   S.revisions.forEach((r, k) => {
     const row = document.createElement("div"); row.className = "rev";
@@ -643,6 +643,7 @@ const localDB = { doc(path) {
     const rs = await db.doc("reel/current").get();
     if (!rs.exists) { $("#reelname").textContent = "No reel loaded yet. Ask Codex to load one."; pill("Nothing to review", true); return; }
     R = rs.data();
+    if (R.brandName) { $("#brandname").textContent = R.brandName; $("#brandsub").hidden = false; }
     if (R.fonts) {   // brand fonts, so the caption preview uses the real faces
       const css = [["rb", R.fonts.body], ["ra", R.fonts.accent]].filter(f => f[1]).map(([n, u]) => `@font-face{font-family:${n};src:url(${u});font-display:swap}`).join("");
       document.head.appendChild(Object.assign(document.createElement("style"), { textContent: css }));

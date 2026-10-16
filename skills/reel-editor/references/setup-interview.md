@@ -1,6 +1,6 @@
 # Setup interview
 
-Runs once, before the first edit. Output: `~/reels/brand.md` (for people and for you) and `~/reels/brand.json` (for the scripts).
+Runs once, before the first edit. Output: `$REELS_HOME/brand.md` (for people and for you) and `$REELS_HOME/brand.json` (for the scripts). `REELS_HOME` is the project's `reels/` folder (see SKILL.md).
 
 ## How to run it
 
@@ -90,16 +90,17 @@ Runs once, before the first edit. Output: `~/reels/brand.md` (for people and for
   "grade": null,
   "captions": { "mode": "word", "case": "lower", "size": 104, "y": 1250 },
   "fonts": {
-    "head":   { "family": "Montserrat", "file": "~/reels/fonts/Montserrat-Bold.ttf", "weight": 700 },
-    "body":   { "family": "Montserrat", "file": "~/reels/fonts/Montserrat-Medium.ttf", "weight": 500 },
-    "accent": { "family": "Playfair Display", "file": "~/reels/fonts/PlayfairDisplay-Italic.ttf", "weight": 400, "style": "italic" }
+    "head":   { "family": "Montserrat", "file": "/Users/you/codex-reel-editor-main/reels/fonts/Montserrat-Bold.ttf", "weight": 700 },
+    "body":   { "family": "Montserrat", "file": "/Users/you/codex-reel-editor-main/reels/fonts/Montserrat-Medium.ttf", "weight": 500 },
+    "accent": { "family": "Playfair Display", "file": "/Users/you/codex-reel-editor-main/reels/fonts/PlayfairDisplay-Italic.ttf", "weight": 400, "style": "italic" }
   }
 }
 ```
 
 - `captions.mode`: `word` (one word at a time) or `phrase` (2-4 words). `y` is the caption's distance from the top on a 1920-tall frame (1250 = mid-chest).
-- `fonts`: download the font files into `~/reels/fonts/` (Google Fonts are free: fetch the family's .ttf files from https://fonts.google.com or the google/fonts GitHub repo). No file = a clean system font is used instead.
+- `fonts`: download the font files into `$REELS_HOME/fonts/` and write each `file` as the full absolute path (no `~`, no `$REELS_HOME`) (Google Fonts are free: fetch the family's .ttf files from https://fonts.google.com or the google/fonts GitHub repo). No file = a clean system font is used instead.
 
+- `vocab`: names and tools they say often (`["Claude", "Codex"]`). Local Whisper misspells them ("Clord"); QA accepts a misspelling of a vocab word, but still flags a missing one.
 - `resolution`: `[2160, 3840]` for 4K.
 - `capcut_font`: a CapCut font URI (`vimo://...`), filled in later - see capcut.md.
 - `grade`: optional ffmpeg colour filter string; leave `null` unless they ask for a look.

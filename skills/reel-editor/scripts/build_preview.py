@@ -17,6 +17,20 @@ def atomic_json(path, value):
     temp=path.with_name(path.name+'.'+uuid.uuid4().hex+'.tmp')
     temp.write_text(json.dumps(value,indent=2));os.replace(temp,path)
 
+def publish_cover_assets(reel, job):
+    """Expose the successful build to cover creation without re-rendering footage."""
+    for name in ('master.mp4', 'final.mp4'):
+        temp = reel / (name + '.tmp')
+        shutil.copy2(job / name, temp)
+        os.replace(temp, reel / name)
+    fonts = reel / 'review-assets' / 'cover-fonts'
+    fonts.mkdir(parents=True, exist_ok=True)
+    for source in (job / 'proj' / 'fonts').iterdir():
+        if source.is_file():
+            temp = fonts / (source.name + '.tmp')
+            shutil.copy2(source, temp)
+            os.replace(temp, fonts / source.name)
+
 class PreviewBuilder:
     def __init__(self,reel):
         self.reel=reel.resolve();self.lock=threading.Lock();self.status={'state':'idle','message':'Ready to build'}
@@ -59,6 +73,7 @@ class PreviewBuilder:
             out=reel/'review-assets'/f'preview-{build_id}.mp4';out.parent.mkdir(exist_ok=True)
             shutil.copy2(job/'final.mp4',out)
             dur=float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',str(out)],text=True))
+            publish_cover_assets(reel, job)
             atomic_json(reel/'review_build.json',{'url':'/media/review-assets/'+out.name,'hash':edit['hash'],
                 'at':datetime.now(timezone.utc).isoformat(),'cutDur':dur,'id':build_id})
             # Keep the matching decisions/edit available without changing the live review.

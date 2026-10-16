@@ -35,8 +35,9 @@ def make_handler(reel, enable_builds=False):
                 for font in brand.get('fonts', {}).values():
                     name = Path(font.get('file', '')).name
                     local = reel / 'proj' / 'fonts' / name
+                    if not local.is_file(): local = reel / 'review-assets' / 'cover-fonts' / name
                     if local.is_file() and local.resolve().is_relative_to(reel):
-                        fonts.append({'family': font.get('family', name), 'url': '/media/proj/fonts/' + name, 'weight': font.get('weight', 400)})
+                        fonts.append({'family': font.get('family', name), 'url': '/media/' + local.relative_to(reel).as_posix(), 'weight': font.get('weight', 400)})
                 self.send_json({'sources': sources, 'fonts': fonts, 'color': brand.get('colors', {}).get('main', '#ED84B0'), 'name': reel.name, 'settings': json.loads((reel / 'thumbnail_settings.json').read_text()) if (reel / 'thumbnail_settings.json').exists() else {}}); return
             if path == '/api/status':
                 self.send_json({**(builder.status if builder else {'state':'disabled','message':'Builds are disabled'}), 'enabled': bool(builder)}); return

@@ -1,4 +1,4 @@
-import importlib.util, json, tempfile, threading, urllib.request, urllib.error
+import importlib.util, json, os, tempfile, threading, urllib.request, urllib.error
 from pathlib import Path
 from http.server import ThreadingHTTPServer
 p=Path(__file__).resolve().parents[1] / 'skills/reel-editor/scripts/review_server.py'
@@ -12,6 +12,9 @@ with tempfile.TemporaryDirectory() as d:
     assert b'Thumbnail studio' in get('/').read()
     assert b'Download portrait PNG' in get('/thumbnail').read()
     assert json.load(get('/api/thumbnail'))['sources'] == []
+    with tempfile.TemporaryDirectory() as home:  # brand comes from REELS_HOME, not the reel folder
+        Path(home,'brand.json').write_text('{"colors":{"main":"#123456"}}');os.environ['REELS_HOME']=home
+        assert json.load(get('/api/thumbnail'))['color']=='#123456'
     cover = dict(source='raw.mp4', time=1.2, title='my ai reel editor', style='shadow', color='#ed84b0', position=280, size=108, font='system-ui', guides=True)
     req=urllib.request.Request(url+'/api/thumbnail',data=json.dumps(cover).encode(),method='PUT',headers={'Origin':url,'Content-Type':'application/json'})
     assert json.load(urllib.request.urlopen(req))['saved']

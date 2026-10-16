@@ -2,6 +2,7 @@
 import json,os,subprocess,tempfile
 from pathlib import Path
 root=Path(__file__).resolve().parents[1];script=root/'skills/reel-editor/scripts/build_reel.py'
+if not (root/'skills/reel-editor/engine/gsap.min.js').is_file(): subprocess.run(['bash',str(root/'skills/reel-editor/scripts/setup_engine.sh')],check=True)  # fresh clone: fetch the pinned engine
 with tempfile.TemporaryDirectory() as tmp:
  p=Path(tmp)
  subprocess.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','color=c=gray:s=108x192:d=1','-c:v','libx264',str(p/'master.mp4')],check=True)

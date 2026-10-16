@@ -13,6 +13,8 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+THUMB_SOURCES = ('master-before-bg.mp4', 'master.mp4', 'raw1080.mp4', 'raw.mp4', 'raw.mov', 'raw.m4v', 'final.mp4')  # iPhone clips arrive as raw.mov
+
 UI = Path(__file__).resolve().parents[1] / 'review'
 DOCS = {'reel/current': 'review_reel.json', 'review/current': 'review_decisions.json',
         'builds/latest': 'review_build.json'}
@@ -25,9 +27,10 @@ def make_handler(reel, enable_builds=False):
         def do_GET(self):
             path = unquote(urlsplit(self.path).path)
             if path == '/api/thumbnail':
-                brand_path = reel / 'brand.json'
+                # the brand lives in REELS_HOME; a reel-local copy (preview jobs) wins
+                brand_path = reel / 'brand.json' if (reel / 'brand.json').is_file() else Path(os.environ.get('REELS_HOME', '~/reels')).expanduser() / 'brand.json'
                 brand = json.loads(brand_path.read_text()) if brand_path.exists() else {}
-                sources = [name for name in ('master-before-bg.mp4', 'master.mp4', 'raw1080.mp4', 'raw.mp4', 'final.mp4') if (reel / name).is_file()]
+                sources = [name for name in THUMB_SOURCES if (reel / name).is_file()]
                 fonts = []
                 for font in brand.get('fonts', {}).values():
                     name = Path(font.get('file', '')).name
@@ -142,7 +145,7 @@ def make_handler(reel, enable_builds=False):
                     for key in ('source','title','style','color','font'):
                         if not isinstance(data.get(key), str): raise ValueError('Invalid text setting')
                     if len(data['title']) > 160: raise ValueError('Title too long')
-                    if data['source'] not in ('master-before-bg.mp4','master.mp4','raw1080.mp4','raw.mp4','final.mp4'): raise ValueError('Invalid source')
+                    if data['source'] not in THUMB_SOURCES: raise ValueError('Invalid source')
                     if data['style'] not in ('shadow','panel','dark'): raise ValueError('Invalid style')
                     if not re.fullmatch(r'#[0-9a-fA-F]{6}', data['color']): raise ValueError('Invalid colour')
                     for key, lo, hi in [('time',0,86400),('position',120,1500),('size',48,150)]:

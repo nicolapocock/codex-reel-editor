@@ -32,7 +32,7 @@ if not -15 <= lufs <= -12.5: fails.append("loudness")
 
 exp = reel / "expected.txt"
 if exp.exists():
-    tok = lambda s: re.sub(r"[^a-z0-9' ]", " ", s.lower()).split()
+    tok = lambda s: re.sub(r"[^a-z0-9' ]", " ", re.sub(r"(?<=\d),(?=\d)", "", s.lower())).split()   # "5,000" == "5000"
     subprocess.run(["npx", "-y", "hyperframes", "transcribe", str(video), "-d", str(reel / "qa_transcript"),
                     "--json", "--model", "small.en"], capture_output=True)
     heard = [t for wd in json.load(open(reel / "qa_transcript/transcript.json")) for t in tok(wd["text"])]

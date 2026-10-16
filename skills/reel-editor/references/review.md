@@ -5,6 +5,7 @@ The review page runs on localhost and saves decisions into the reel folder. Foot
 ## Prepare
 
 1. After transcription and audio cleanup, run `python3 scripts/tighten.py <reel> --detect`. Exit 3 means fillers were not detected: disclose that limitation. Write `proposal.json` using the schema in `scripts/review_sync.py` (kept source spans, accent words, cards anchored to spoken words).
+   Shortcut for steps 2-4: `python3 scripts/prepare_review.py <reel> --brand-home "$REELS_HOME"` runs the export, makes the proxy, audio comparisons, fonts and card thumbnails, and sets every URL.
 2. `python3 scripts/review_sync.py export <reel> <proposal.json> <reel>/review-export`. This also writes `<reel>/review_reel.json`.
 3. Create `<reel>/review-assets/source.mp4`, a 540x960 proxy of the raw footage with `voice.wav` as its audio. Example (replace raw extension as needed):
    ```bash

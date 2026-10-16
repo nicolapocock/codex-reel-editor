@@ -39,8 +39,16 @@ def export(reel, proposal, out):
     import array, math, wave
     wf = wave.open(str(reel / "voice.wav")); sr = wf.getframerate(); pcm = array.array("h"); pcm.frombytes(wf.readframes(wf.getnframes()))
     hop = int(sr * 0.05)
-    lev = sorted(20 * math.log10(max(1.0, math.sqrt(sum(x * x for x in pcm[i:i + hop:4]) / (hop / 4))) / 32768) for i in range(0, len(pcm) - hop, hop))
+    lv = [20 * math.log10(max(1.0, math.sqrt(sum(x * x for x in pcm[i:i + hop:4]) / (hop / 4))) / 32768) for i in range(0, len(pcm) - hop, hop)]
+    lev = sorted(lv)
     thresh = min(lev[len(lev) // 10] + 5, -20)
+    # A clip that opens on silence (camera setup) gets its first words pinned near 0 s by Whisper. Move the words that
+    # start before the first speech-level audio onto it, or the pause trim cuts the real opening words.
+    onset = next((k * hop / sr for k, l in enumerate(lv) if l > min(thresh + 20, -30)), 0.0)
+    early = [w for w in words if w["s"] < onset - 0.15]
+    if early and len(early) < len(words) and words[len(early)]["s"] - onset > 0.1:
+        a0, b0, a1 = early[0]["s"], words[len(early)]["s"], max(0.0, onset - 0.05)
+        for w in early: w["s"], w["e"] = (round(a1 + (t - a0) * (b0 - a1) / (b0 - a0), 3) for t in (w["s"], w["e"]))
     sd = subprocess.run(["ffmpeg", "-hide_banner", "-i", str(reel / "voice.wav"), "-af", f"silencedetect=noise={thresh:.1f}dB:d=0.15", "-f", "null", "-"],
                         capture_output=True, text=True).stderr
     sil = list(zip(map(float, re.findall(r"silence_start: ([\d.]+)", sd)), map(float, re.findall(r"silence_end: ([\d.]+)", sd))))

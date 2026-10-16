@@ -9,7 +9,7 @@ edit.json (written by auto_edit.py, then Claude marks accents and adds cards):
   cards:    [{type, start, end, ...}]       types:
      title  {text: "line one / line two"}            big headline in the space above the head (hook)
      block  {top: "don't", bottom: "worry"}          full brand-colour screen with the clip framed in it (reveal)
-     card   {title: "my stack", rows: ["a","b"]}     white UI card, rows appear one by one (lists, steps, tools)
+     card   {title: "my stack", rows: ["a","b"], y?: 150}  white UI card, rows appear one by one (lists, steps, tools)
      tag    {text: "open source", y: 300}            small pill label that pops on (name drops)
      (every card: leave out "end" and it clears when the phrase it starts in finishes)
      cta    {text: "comment EDIT", y?: 1360}         call-to-action pill (kept above the bottom ~420 px IG covers); CAPS word = pop colour
@@ -230,7 +230,7 @@ for i, c in enumerate(edit.get("cards", [])):
     elif kind == "card":
         rows = c.get("rows", [])
         rt = c.get("row_times") or [a + 0.45 + 0.35 * j for j in range(len(rows))]
-        front.append(f'<div id="{cid}" class="card{" glass" if c.get("glass") else ""}"><div class="ch" style="background:{MAIN};{font("head", 40)}"><i></i>{esc(case(c.get("title", "")))}</div>'
+        front.append(f'<div id="{cid}" class="card{" glass" if c.get("glass") else ""}" style="top:{c.get("y", 150)}px"><div class="ch" style="background:{MAIN};{font("head", 40)}"><i></i>{esc(case(c.get("title", "")))}</div>'
                      + "".join(f'<div class="cr" id="{cid}r{j}" style="{font("body", 50)};color:{MAIN}"><b style="background:{POP}"></b>{esc(case(r))}</div>' for j, r in enumerate(rows)) + "</div>")
         show(f"#{cid}", a, b)
         js.append(f'tl.fromTo("#{cid}",{{y:-160,scale:0.85,rotation:-3}},{{y:0,scale:1,rotation:-1.5,duration:0.5,ease:"back.out(1.6)"}},{q(a)});')

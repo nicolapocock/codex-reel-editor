@@ -11,6 +11,7 @@ BRAND="${REELS_HOME:-$HOME/reels}/brand.json"
 RES="$(python3 -c "import json;r=json.load(open('$BRAND')).get('resolution',[1080,1920]);print('portrait-4k' if r[0]>=2160 else 'portrait')")"
 [ "$FINAL" = 1 ] || RES=portrait                 # previews at 1080p: a quarter of the pixels of 4K
 stamp() { echo "$(date +%s) $1" >> "$REEL/timings.log"; }
+: > "$REEL/timings.log"   # one log per run, so the printed total is this render, not every render so far
 
 # a preview cut leaves a 1080p master.mp4; re-cut it at the brand resolution so the final isn't an upscale
 if [ "$FINAL" = 1 ]; then
